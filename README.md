@@ -1,0 +1,1 @@
+The GHMC Pothole Reporting System is a smart web-based platform that allows citizens to report road potholes easily using location, images, and descriptions. The system helps GHMC authorities track, verify, and repair potholes efficiently, improving road safety, reducing accidents, and enabling faster response through technology and citizen participation.
