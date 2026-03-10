@@ -1,0 +1,2707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GHMC – Pothole Reporting System</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Noto+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════
+   GLOBAL RESET & VARIABLES
+═══════════════════════════════════════════ */
+:root {
+  --saffron:#FF6B00; --deep:#0A1628; --gold:#FFB300;
+  --slate:#1E2D45;  --card:#162035; --light:#F5F0E8;
+  --green:#22c55e;  --red:#ef4444;  --yellow:#eab308;
+  --border:rgba(255,107,0,0.2);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Noto Sans',sans-serif;background:var(--deep);color:var(--light);overflow-x:hidden;}
+a{text-decoration:none;color:inherit;}
+button{cursor:pointer;font-family:'Noto Sans',sans-serif;}
+input,textarea,select{font-family:'Noto Sans',sans-serif;}
+
+/* ═══════════════════════════════════════════
+   PAGE SYSTEM — show/hide
+═══════════════════════════════════════════ */
+.page{display:none;min-height:100vh;}
+.page.active{display:block;}
+
+/* ═══════════════════════════════════════════
+   SHARED TOPBAR
+═══════════════════════════════════════════ */
+.topbar{
+  position:fixed;top:0;left:0;right:0;z-index:200;height:64px;
+  background:rgba(10,22,40,0.97);backdrop-filter:blur(14px);
+  border-bottom:2px solid var(--saffron);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 2rem;
+}
+.topbar-logo{display:flex;align-items:center;gap:12px;cursor:pointer;}
+.topbar-emblem{
+  width:44px;height:44px;border-radius:50%;
+  background:linear-gradient(135deg,var(--saffron),var(--gold));
+  display:flex;align-items:center;justify-content:center;font-size:1.4rem;
+  box-shadow:0 0 18px rgba(255,107,0,0.5);
+  animation:glow 2.5s ease-in-out infinite;
+}
+@keyframes glow{0%,100%{box-shadow:0 0 18px rgba(255,107,0,0.4);}50%{box-shadow:0 0 30px rgba(255,179,0,0.7);}}
+.topbar-text .org{font-family:'Rajdhani',sans-serif;font-size:1rem;font-weight:700;color:var(--saffron);line-height:1.1;letter-spacing:.5px;}
+.topbar-text .sub{font-size:.6rem;color:#667;letter-spacing:2px;text-transform:uppercase;}
+.topbar-nav{display:flex;align-items:center;gap:1.5rem;}
+.topbar-nav a{font-size:.85rem;color:#aab;letter-spacing:1px;text-transform:uppercase;transition:color .2s;}
+.topbar-nav a:hover{color:var(--gold);}
+.topbar-right{display:flex;align-items:center;gap:.8rem;}
+.btn-nav{
+  background:var(--saffron);color:white;border:none;
+  padding:.45rem 1.4rem;border-radius:3px;
+  font-family:'Rajdhani',sans-serif;font-size:.95rem;font-weight:700;
+  letter-spacing:1px;transition:all .2s;
+}
+.btn-nav:hover{background:#ff8c2a;transform:translateY(-1px);}
+.btn-nav.outline{background:transparent;border:1px solid rgba(255,255,255,.25);color:#ccd;}
+.btn-nav.outline:hover{border-color:var(--gold);color:var(--gold);}
+.user-chip{
+  display:none;align-items:center;gap:.6rem;
+  background:rgba(255,107,0,.1);border:1px solid var(--border);
+  border-radius:20px;padding:.3rem .9rem .3rem .4rem;
+}
+.user-chip.show{display:flex;}
+.user-avatar{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--saffron),var(--gold));display:flex;align-items:center;justify-content:center;font-size:.9rem;}
+.user-chip span{font-size:.82rem;color:var(--gold);font-weight:600;}
+.logout-link{font-size:.75rem;color:#667;cursor:pointer;padding:.3rem .6rem;border-radius:3px;transition:color .2s;}
+.logout-link:hover{color:var(--red);}
+
+/* ═══════════════════════════════════════════
+   ① HOME PAGE
+═══════════════════════════════════════════ */
+#page-home{background:var(--deep);}
+
+/* ticker */
+.ticker{background:var(--saffron);padding:.45rem 0;overflow:hidden;white-space:nowrap;margin-top:64px;}
+.ticker-inner{display:inline-block;animation:tick 30s linear infinite;font-family:'Rajdhani',sans-serif;font-size:.88rem;font-weight:600;letter-spacing:1px;color:white;}
+@keyframes tick{from{transform:translateX(100vw);}to{transform:translateX(-100%);}}
+
+/* hero */
+.hero{
+  min-height:90vh;display:grid;grid-template-columns:1fr 1fr;
+  align-items:center;padding:4rem 4rem 3rem;
+  position:relative;overflow:hidden;
+}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 70% 50%,rgba(255,107,0,.1) 0%,transparent 60%),radial-gradient(ellipse at 10% 80%,rgba(255,179,0,.07) 0%,transparent 50%);}
+.hero-text{position:relative;z-index:2;}
+.hero-badge{
+  display:inline-block;background:rgba(255,107,0,.15);border:1px solid var(--saffron);
+  color:var(--saffron);padding:.3rem 1rem;font-size:.72rem;letter-spacing:2px;
+  text-transform:uppercase;border-radius:2px;margin-bottom:1.4rem;
+  animation:fadeUp .6s ease forwards;
+}
+.hero h1{
+  font-family:'Rajdhani',sans-serif;font-size:clamp(2.4rem,4.5vw,3.8rem);
+  font-weight:700;line-height:1.1;color:white;margin-bottom:1.2rem;
+  animation:fadeUp .7s .1s ease both;
+}
+.hero h1 span{color:var(--saffron);}
+.hero p{font-size:1rem;color:#99aabb;line-height:1.8;max-width:460px;margin-bottom:2.2rem;animation:fadeUp .7s .2s ease both;}
+.hero-btns{display:flex;gap:1rem;flex-wrap:wrap;animation:fadeUp .7s .3s ease both;}
+.btn-primary{background:var(--saffron);color:white;border:none;padding:.8rem 2.2rem;border-radius:3px;font-family:'Rajdhani',sans-serif;font-size:1.05rem;font-weight:700;letter-spacing:1px;box-shadow:0 4px 20px rgba(255,107,0,.4);transition:all .2s;}
+.btn-primary:hover{background:#ff8c2a;transform:translateY(-2px);box-shadow:0 8px 28px rgba(255,107,0,.5);}
+.btn-outline-w{background:transparent;color:var(--light);border:1px solid rgba(255,255,255,.25);padding:.8rem 2rem;border-radius:3px;font-family:'Rajdhani',sans-serif;font-size:1.05rem;font-weight:600;letter-spacing:1px;transition:all .2s;}
+.btn-outline-w:hover{border-color:var(--gold);color:var(--gold);}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px);}to{opacity:1;transform:translateY(0);}}
+
+/* hero visual */
+.hero-visual{position:relative;z-index:2;display:flex;flex-direction:column;gap:.9rem;animation:slideR .8s ease both;}
+@keyframes slideR{from{opacity:0;transform:translateX(30px);}to{opacity:1;transform:translateX(0);}}
+.hero-img-main{
+  width:100%;height:320px;border-radius:8px;object-fit:cover;
+  border:2px solid rgba(255,107,0,.3);box-shadow:0 16px 48px rgba(0,0,0,.5);
+  background:linear-gradient(135deg,#1E2D45,#0A1628);
+}
+.hero-img-row{display:grid;grid-template-columns:1fr 1fr;gap:.9rem;}
+.hero-img-sm{
+  width:100%;height:148px;border-radius:6px;object-fit:cover;
+  border:2px solid rgba(255,179,0,.2);box-shadow:0 8px 24px rgba(0,0,0,.4);
+  background:linear-gradient(135deg,#162035,#1E2D45);
+  transition:transform .3s;
+}
+.hero-img-sm:hover{transform:scale(1.03);}
+.hero-tag{
+  position:absolute;top:14px;left:14px;
+  background:rgba(255,107,0,.92);color:white;
+  padding:.35rem .9rem;border-radius:3px;
+  font-family:'Rajdhani',sans-serif;font-size:.82rem;font-weight:700;letter-spacing:1px;
+}
+
+/* stats row */
+.stats-bar{background:var(--slate);border-top:2px solid rgba(255,107,0,.25);border-bottom:2px solid rgba(255,107,0,.25);display:grid;grid-template-columns:repeat(4,1fr);}
+.stat-cell{padding:1.8rem;text-align:center;border-right:1px solid rgba(255,255,255,.07);transition:background .3s;}
+.stat-cell:last-child{border-right:none;}
+.stat-cell:hover{background:rgba(255,107,0,.05);}
+.stat-num{font-family:'Rajdhani',sans-serif;font-size:2.2rem;font-weight:700;color:var(--gold);}
+.stat-lbl{font-size:.72rem;color:#667;text-transform:uppercase;letter-spacing:1.5px;margin-top:.2rem;}
+
+/* steps */
+.section{padding:4.5rem 4rem;}
+.sec-title{font-family:'Rajdhani',sans-serif;font-size:2rem;font-weight:700;color:white;margin-bottom:.4rem;}
+.sec-line{width:56px;height:3px;background:var(--saffron);margin-bottom:2.5rem;}
+.steps-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1.5rem;}
+.step-card{
+  background:var(--card);border:1px solid rgba(255,255,255,.06);
+  border-radius:8px;padding:1.8rem 1.4rem;position:relative;
+  transition:transform .3s,border-color .3s;
+}
+.step-card:hover{transform:translateY(-5px);border-color:var(--saffron);}
+.step-num{
+  position:absolute;top:-14px;left:1.4rem;
+  background:var(--saffron);color:white;
+  width:34px;height:34px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Rajdhani',sans-serif;font-size:1.2rem;font-weight:700;
+}
+.step-icon{font-size:1.8rem;margin:.4rem 0 .8rem;}
+.step-card h3{font-family:'Rajdhani',sans-serif;font-size:1.1rem;font-weight:700;color:var(--gold);margin-bottom:.4rem;}
+.step-card p{font-size:.83rem;color:#778899;line-height:1.6;}
+
+/* gallery */
+.gallery{display:grid;grid-template-columns:2fr 1fr 1fr;grid-template-rows:200px 200px;gap:.9rem;}
+.g-cell{overflow:hidden;border-radius:6px;position:relative;border:2px solid rgba(255,107,0,.12);}
+.g-cell.tall{grid-row:span 2;}
+.g-cell img{width:100%;height:100%;object-fit:cover;transition:transform .4s;background:var(--slate);}
+.g-cell:hover img{transform:scale(1.05);}
+.g-cap{position:absolute;bottom:0;left:0;right:0;padding:.7rem .9rem;background:linear-gradient(transparent,rgba(0,0,0,.8));font-size:.75rem;color:#dde;letter-spacing:1px;}
+
+/* CTA strip */
+.cta-strip{
+  margin:0 4rem 4rem;background:linear-gradient(135deg,var(--slate),rgba(255,107,0,.1));
+  border:1px solid rgba(255,107,0,.25);border-radius:10px;
+  padding:3.5rem;display:flex;align-items:center;justify-content:space-between;gap:2rem;
+  position:relative;overflow:hidden;
+}
+.cta-strip::before{content:'⚠';position:absolute;right:-20px;top:-20px;font-size:160px;opacity:.04;}
+.cta-strip h2{font-family:'Rajdhani',sans-serif;font-size:1.8rem;font-weight:700;margin-bottom:.4rem;}
+.cta-strip p{color:#778899;max-width:460px;line-height:1.7;font-size:.92rem;}
+
+/* footer */
+.footer{background:#060e1a;border-top:2px solid rgba(255,107,0,.18);padding:2rem 4rem;display:flex;justify-content:space-between;align-items:center;}
+.footer-left{font-size:.82rem;color:#445;}
+.footer-left span{color:var(--saffron);font-weight:600;}
+.footer-right{font-family:'Rajdhani',sans-serif;font-size:1.2rem;font-weight:700;color:var(--gold);letter-spacing:2px;}
+
+/* ═══════════════════════════════════════════
+   ② LOGIN PAGE
+═══════════════════════════════════════════ */
+#page-login{min-height:100vh;display:none;grid-template-columns:1fr 1fr;padding-top:64px;}
+#page-login.active{display:grid;}
+
+.login-left{
+  position:relative;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;padding:3rem;
+  background:var(--deep);
+}
+.login-left::before{content:'';position:absolute;inset:0;background:linear-gradient(to top,rgba(10,22,40,.97) 30%,rgba(10,22,40,.35));}
+.login-scene{position:absolute;inset:0;width:100%;height:100%;}
+.login-left-content{position:relative;z-index:2;}
+.login-left-content h2{font-family:'Rajdhani',sans-serif;font-size:2rem;font-weight:700;color:white;margin-bottom:.6rem;line-height:1.2;}
+.login-left-content h2 span{color:var(--saffron);}
+.login-left-content p{color:#8899aa;font-size:.9rem;line-height:1.7;max-width:360px;}
+.login-mini-stats{display:flex;gap:2rem;margin-top:1.8rem;}
+.lms-item .n{font-family:'Rajdhani',sans-serif;font-size:1.5rem;font-weight:700;color:var(--gold);}
+.lms-item .l{font-size:.68rem;color:#556;letter-spacing:1px;text-transform:uppercase;}
+
+.login-right{
+  display:flex;flex-direction:column;justify-content:center;align-items:center;
+  padding:3rem 2rem;background:var(--slate);
+  border-left:2px solid rgba(255,107,0,.15);
+}
+.login-card{width:100%;max-width:400px;}
+.login-logo{text-align:center;margin-bottom:2rem;}
+.login-logo .emb{
+  width:58px;height:58px;border-radius:50%;margin:0 auto 1rem;
+  background:linear-gradient(135deg,var(--saffron),var(--gold));
+  display:flex;align-items:center;justify-content:center;font-size:1.8rem;
+  box-shadow:0 0 22px rgba(255,107,0,.45);
+}
+.login-logo h1{font-family:'Rajdhani',sans-serif;font-size:1.6rem;font-weight:700;color:white;}
+.login-logo p{font-size:.75rem;color:#556;letter-spacing:.5px;}
+
+.tabs{display:flex;border-radius:5px;overflow:hidden;border:1px solid rgba(255,107,0,.3);margin-bottom:1.8rem;}
+.tab{flex:1;padding:.65rem;background:transparent;border:none;cursor:pointer;font-family:'Rajdhani',sans-serif;font-size:.95rem;font-weight:700;color:#778;letter-spacing:1px;transition:all .2s;}
+.tab.active{background:var(--saffron);color:white;}
+
+.form-body{display:none;}
+.form-body.active{display:block;}
+
+.fg{margin-bottom:1rem;}
+.fg label{display:block;font-size:.72rem;color:#778;letter-spacing:1px;text-transform:uppercase;margin-bottom:.38rem;}
+.fg input,.fg select{
+  width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);
+  border-radius:4px;padding:.68rem .9rem;color:white;font-size:.9rem;outline:none;
+  transition:border-color .2s;
+}
+.fg input:focus,.fg select:focus{border-color:var(--saffron);background:rgba(255,107,0,.04);}
+.fg input::placeholder{color:#334;}
+.fg select option{background:var(--slate);}
+
+.forgot{text-align:right;margin-top:.2rem;}
+.forgot a{font-size:.75rem;color:#556;cursor:pointer;}
+.forgot a:hover{color:var(--gold);}
+
+.btn-form{
+  width:100%;padding:.8rem;background:var(--saffron);color:white;border:none;
+  border-radius:4px;font-family:'Rajdhani',sans-serif;font-size:1.05rem;font-weight:700;
+  letter-spacing:1px;margin-top:.4rem;box-shadow:0 4px 18px rgba(255,107,0,.4);
+  transition:all .2s;
+}
+.btn-form:hover{background:#ff8c2a;transform:translateY(-1px);}
+
+.or-divider{display:flex;align-items:center;gap:.8rem;margin:1.2rem 0;color:#334;font-size:.78rem;}
+.or-divider::before,.or-divider::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.07);}
+
+.alt-btn{
+  width:100%;padding:.65rem;background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.1);border-radius:4px;
+  color:#aab;font-size:.85rem;display:flex;align-items:center;justify-content:center;
+  gap:.5rem;margin-bottom:.6rem;transition:all .2s;
+}
+.alt-btn:hover{border-color:var(--gold);color:var(--gold);}
+
+.terms{font-size:.7rem;color:#445;text-align:center;margin-top:.9rem;line-height:1.5;}
+.terms span{color:var(--saffron);}
+
+.login-err{background:rgba(239,68,68,.12);border:1px solid var(--red);color:#f99;border-radius:4px;padding:.55rem .9rem;font-size:.82rem;margin-bottom:.8rem;display:none;}
+.login-err.show{display:block;}
+
+/* ═══════════════════════════════════════════
+   ③ DASHBOARD PAGE
+═══════════════════════════════════════════ */
+#page-dash{display:none;grid-template-columns:220px 1fr;grid-template-rows:64px 1fr;min-height:100vh;}
+#page-dash.active{display:grid;}
+
+/* sidebar */
+.sidebar{
+  grid-row:2;background:var(--card);
+  border-right:1px solid rgba(255,107,0,.12);
+  display:flex;flex-direction:column;gap:.2rem;padding:1.2rem 0;
+  overflow-y:auto;
+}
+.sb-label{font-size:.62rem;color:#334;letter-spacing:2px;text-transform:uppercase;padding:.6rem 1.1rem;margin-top:.6rem;}
+.sb-item{
+  display:flex;align-items:center;gap:.7rem;padding:.6rem 1.1rem;
+  color:#667;font-size:.88rem;cursor:pointer;border-left:3px solid transparent;
+  transition:all .2s;
+}
+.sb-item:hover{color:var(--light);background:rgba(255,107,0,.05);}
+.sb-item.act{color:var(--saffron);border-left-color:var(--saffron);background:rgba(255,107,0,.08);font-weight:600;}
+.sb-item .si{font-size:1rem;width:20px;text-align:center;}
+.sb-footer{margin-top:auto;padding:.9rem 1.1rem;border-top:1px solid rgba(255,255,255,.05);}
+.sb-logout{
+  width:100%;background:none;border:1px solid rgba(239,68,68,.3);
+  color:#f87;padding:.55rem;border-radius:4px;font-family:'Rajdhani',sans-serif;
+  font-weight:600;font-size:.88rem;letter-spacing:1px;transition:all .2s;
+}
+.sb-logout:hover{background:rgba(239,68,68,.1);}
+
+/* main area */
+.dash-main{grid-row:2;overflow-y:auto;padding:1.6rem 1.8rem;display:flex;flex-direction:column;gap:1.6rem;}
+
+/* summary cards */
+.sum-row{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;}
+.sum-card{
+  background:var(--card);border:1px solid rgba(255,255,255,.06);
+  border-radius:8px;padding:1.2rem 1.4rem;position:relative;overflow:hidden;
+  transition:transform .25s,border-color .25s;
+}
+.sum-card:hover{transform:translateY(-3px);border-color:rgba(255,107,0,.3);}
+.sum-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.sum-card.c1::before{background:var(--saffron);}
+.sum-card.c2::before{background:var(--yellow);}
+.sum-card.c3::before{background:var(--green);}
+.sum-card.c4::before{background:var(--red);}
+.sum-icon{font-size:1.5rem;margin-bottom:.4rem;}
+.sum-num{font-family:'Rajdhani',sans-serif;font-size:2rem;font-weight:700;color:white;}
+.sum-lbl{font-size:.7rem;color:#556;text-transform:uppercase;letter-spacing:1.2px;margin-top:.1rem;}
+
+/* section title in dash */
+.dash-sec-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;}
+.dash-sec-title{font-family:'Rajdhani',sans-serif;font-size:1.3rem;font-weight:700;color:white;}
+.pill{background:rgba(255,107,0,.15);color:var(--saffron);border:1px solid rgba(255,107,0,.3);font-size:.68rem;padding:.2rem .65rem;border-radius:20px;letter-spacing:1px;}
+
+/* report form */
+.report-form-box{background:var(--card);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:1.8rem;}
+.form-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1.4rem;}
+.rf-group{margin-bottom:1rem;}
+.rf-group label{display:block;font-size:.7rem;color:#778;letter-spacing:1px;text-transform:uppercase;margin-bottom:.35rem;}
+.rf-group input,.rf-group textarea,.rf-group select{
+  width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);
+  border-radius:4px;padding:.65rem .9rem;color:white;font-size:.88rem;outline:none;
+  transition:border-color .2s;
+}
+.rf-group input:focus,.rf-group textarea:focus,.rf-group select:focus{border-color:var(--saffron);background:rgba(255,107,0,.03);}
+.rf-group input::placeholder,.rf-group textarea::placeholder{color:#334;}
+.rf-group textarea{resize:vertical;min-height:90px;}
+.rf-group select option{background:var(--slate);}
+
+/* severity pills */
+.sev-row{display:flex;gap:.6rem;flex-wrap:wrap;}
+.sev-pill{
+  padding:.4rem 1rem;border-radius:20px;border:1px solid rgba(255,255,255,.15);
+  font-size:.8rem;font-weight:600;background:transparent;color:#778;transition:all .2s;
+}
+.sev-pill.sel-low{background:rgba(34,197,94,.15);border-color:var(--green);color:var(--green);}
+.sev-pill.sel-med{background:rgba(234,179,8,.15);border-color:var(--yellow);color:var(--yellow);}
+.sev-pill.sel-hi{background:rgba(239,68,68,.15);border-color:var(--red);color:var(--red);}
+.sev-pill.sel-crit{background:rgba(255,107,0,.2);border-color:var(--saffron);color:var(--saffron);}
+.sev-pill:hover{border-color:#aab;color:var(--light);}
+
+/* photo upload */
+.upload-zone{
+  border:2px dashed rgba(255,107,0,.3);border-radius:8px;
+  padding:1.8rem;text-align:center;cursor:pointer;
+  transition:all .2s;background:rgba(255,107,0,.02);
+}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--saffron);background:rgba(255,107,0,.06);}
+.upload-zone input{display:none;}
+.uz-icon{font-size:1.8rem;margin-bottom:.4rem;}
+.uz-txt{font-size:.82rem;color:#556;}
+.uz-txt em{color:var(--saffron);font-style:normal;}
+.preview-strip{display:flex;gap:.6rem;flex-wrap:wrap;margin-top:.7rem;}
+.thumb-wrap{position:relative;display:inline-block;}
+.thumb-img{width:66px;height:66px;border-radius:5px;object-fit:cover;border:2px solid rgba(255,107,0,.35);}
+.thumb-del{
+  position:absolute;top:-5px;right:-5px;width:16px;height:16px;
+  background:var(--red);color:white;border:none;border-radius:50%;
+  font-size:.6rem;display:flex;align-items:center;justify-content:center;
+}
+
+/* submit row */
+.sub-row{display:flex;gap:.9rem;align-items:center;margin-top:.6rem;}
+.btn-sub{
+  background:var(--saffron);color:white;border:none;padding:.72rem 2.2rem;
+  border-radius:4px;font-family:'Rajdhani',sans-serif;font-size:1.05rem;font-weight:700;
+  letter-spacing:1px;box-shadow:0 4px 18px rgba(255,107,0,.4);transition:all .2s;
+}
+.btn-sub:hover{background:#ff8c2a;transform:translateY(-1px);}
+.btn-clr{background:none;border:1px solid rgba(255,255,255,.15);color:#778;padding:.72rem 1.4rem;border-radius:4px;font-family:'Rajdhani',sans-serif;font-size:.9rem;font-weight:600;transition:all .2s;}
+.btn-clr:hover{border-color:#aab;color:var(--light);}
+
+/* DSA panel */
+.dsa-panel{background:var(--card);border:1px solid rgba(255,179,0,.15);border-radius:10px;padding:1.4rem;display:flex;flex-direction:column;gap:1rem;}
+.dsa-title{font-family:'Rajdhani',sans-serif;font-size:1rem;font-weight:700;color:var(--gold);}
+.dsa-block{background:rgba(255,255,255,.03);border-radius:6px;padding:.9rem;}
+.dsa-block h4{font-size:.68rem;color:#556;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:.6rem;}
+.empty-s{text-align:center;color:#334;padding:1rem;font-size:.8rem;}
+
+/* PQ items */
+.pq-item{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:.4rem .65rem;border-radius:4px;margin-bottom:.35rem;
+  font-size:.78rem;border-left:3px solid;animation:slideIn .3s ease;
+}
+@keyframes slideIn{from{opacity:0;transform:translateX(-8px);}to{opacity:1;transform:translateX(0);}}
+.pq-item.p1{background:rgba(239,68,68,.1);border-color:var(--red);}
+.pq-item.p2{background:rgba(255,107,0,.1);border-color:var(--saffron);}
+.pq-item.p3{background:rgba(234,179,8,.1);border-color:var(--yellow);}
+.pq-item.p4{background:rgba(34,197,94,.1);border-color:var(--green);}
+.pq-badge{font-size:.62rem;font-weight:700;padding:.13rem .45rem;border-radius:3px;text-transform:uppercase;}
+.pq-item.p1 .pq-badge{background:rgba(239,68,68,.3);color:#f87;}
+.pq-item.p2 .pq-badge{background:rgba(255,107,0,.3);color:var(--saffron);}
+.pq-item.p3 .pq-badge{background:rgba(234,179,8,.3);color:var(--yellow);}
+.pq-item.p4 .pq-badge{background:rgba(34,197,94,.3);color:var(--green);}
+
+/* HashMap rows */
+.hm-row{display:flex;justify-content:space-between;padding:.3rem .4rem;border-bottom:1px solid rgba(255,255,255,.04);font-size:.77rem;}
+.hm-key{color:#556;font-family:monospace;font-size:.72rem;}
+.hm-val{color:var(--gold);font-weight:600;}
+
+/* Log items */
+.log-item{display:flex;gap:.6rem;align-items:flex-start;padding:.5rem 0;border-bottom:1px solid rgba(255,255,255,.04);animation:slideIn .3s ease;}
+.log-item:last-child{border-bottom:none;}
+.log-dot{width:9px;height:9px;border-radius:50%;margin-top:4px;flex-shrink:0;}
+.log-dot.pending{background:var(--yellow);}
+.log-dot.resolved{background:var(--green);}
+.log-dot.assigned{background:var(--saffron);}
+.log-id{font-family:monospace;font-size:.68rem;color:#445;}
+.log-desc{font-size:.79rem;color:#99aabb;margin:.1rem 0;}
+.log-meta{font-size:.68rem;color:#445;display:flex;gap:.6rem;}
+.log-status{font-size:.62rem;font-weight:700;padding:.12rem .45rem;border-radius:3px;text-transform:uppercase;white-space:nowrap;}
+.ls-pending{background:rgba(234,179,8,.2);color:var(--yellow);}
+.ls-assigned{background:rgba(255,107,0,.2);color:var(--saffron);}
+.ls-resolved{background:rgba(34,197,94,.2);color:var(--green);}
+
+/* My Reports table */
+.reports-table{width:100%;border-collapse:collapse;}
+.reports-table th{background:rgba(255,107,0,.1);color:var(--saffron);font-family:'Rajdhani',sans-serif;font-size:.78rem;letter-spacing:1px;text-transform:uppercase;padding:.7rem 1rem;text-align:left;border-bottom:1px solid rgba(255,107,0,.2);}
+.reports-table td{padding:.75rem 1rem;font-size:.83rem;color:#aab;border-bottom:1px solid rgba(255,255,255,.04);}
+.reports-table tr:hover td{background:rgba(255,107,0,.03);}
+.sev-tag{display:inline-block;padding:.18rem .6rem;border-radius:3px;font-size:.68rem;font-weight:700;text-transform:uppercase;}
+.sev-tag.Low{background:rgba(34,197,94,.15);color:var(--green);}
+.sev-tag.Medium{background:rgba(234,179,8,.15);color:var(--yellow);}
+.sev-tag.High{background:rgba(239,68,68,.15);color:var(--red);}
+.sev-tag.Critical{background:rgba(255,107,0,.2);color:var(--saffron);}
+
+/* toast */
+.toast{
+  position:fixed;bottom:1.8rem;right:1.8rem;
+  background:var(--slate);border:1px solid var(--saffron);
+  border-radius:8px;padding:.9rem 1.3rem;
+  display:flex;align-items:center;gap:.7rem;
+  font-size:.87rem;color:var(--light);
+  box-shadow:0 8px 32px rgba(0,0,0,.5);
+  transform:translateY(80px);opacity:0;
+  transition:all .4s cubic-bezier(.34,1.56,.64,1);
+  z-index:999;max-width:320px;
+}
+.toast.show{transform:translateY(0);opacity:1;}
+.toast-icon{font-size:1.3rem;}
+.toast strong{color:var(--gold);display:block;font-size:.92rem;}
+
+/* view toggle for dash sections */
+.dash-section{display:none;}
+.dash-section.active{display:flex;flex-direction:column;gap:1.4rem;}
+
+/* Analytics bar chart */
+.bar-row{display:flex;align-items:center;gap:.7rem;font-size:.8rem;}
+.bar-label{width:90px;color:#aab;text-align:right;flex-shrink:0;}
+.bar-track{flex:1;height:18px;background:rgba(255,255,255,.05);border-radius:4px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:4px;transition:width .6s ease;}
+.bar-val{width:36px;text-align:right;color:var(--gold);font-family:'Rajdhani',sans-serif;font-weight:700;flex-shrink:0;}
+/* Notification items */
+.notif-item{display:flex;align-items:flex-start;gap:.9rem;padding:1rem 1.2rem;border-bottom:1px solid rgba(255,255,255,.05);transition:background .2s;}
+.notif-item:last-child{border-bottom:none;}
+.notif-item:hover{background:rgba(255,107,0,.03);}
+.notif-item.unread{background:rgba(255,107,0,.05);border-left:3px solid var(--saffron);}
+.notif-item.read{border-left:3px solid transparent;}
+.notif-ico{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;}
+.notif-body{flex:1;}
+.notif-title{font-size:.88rem;font-weight:600;color:var(--light);margin-bottom:.2rem;}
+.notif-desc{font-size:.78rem;color:#778899;line-height:1.5;}
+.notif-time{font-size:.68rem;color:#445;margin-top:.2rem;}
+.notif-actions{display:flex;gap:.4rem;align-items:center;flex-shrink:0;}
+.notif-mark{background:none;border:1px solid rgba(255,255,255,.1);color:#667;padding:.25rem .6rem;border-radius:3px;font-size:.7rem;cursor:pointer;transition:all .2s;}
+.notif-mark:hover{border-color:var(--gold);color:var(--gold);}
+@keyframes modalIn{from{opacity:0;transform:translate(-50%,-48%);}to{opacity:1;transform:translate(-50%,-50%);}}
+@media(max-width:900px){
+  .hero{grid-template-columns:1fr;padding:3rem 1.5rem 2rem;}
+  .hero-visual{display:none;}
+  .stats-bar{grid-template-columns:1fr 1fr;}
+  .steps-grid{grid-template-columns:1fr 1fr;}
+  .section{padding:3rem 1.5rem;}
+  .cta-strip{flex-direction:column;margin:0 1.5rem 3rem;}
+  .gallery{grid-template-columns:1fr 1fr;grid-template-rows:auto;}
+  .g-cell.tall{grid-row:span 1;}
+  .footer{flex-direction:column;gap:.8rem;text-align:center;padding:1.5rem;}
+  #page-login{grid-template-columns:1fr;}
+  .login-left{min-height:220px;}
+  #page-dash{grid-template-columns:1fr;}
+  .sidebar{display:none;}
+  .sum-row{grid-template-columns:1fr 1fr;}
+  .form-grid-2{grid-template-columns:1fr;}
+  .topbar-nav{display:none;}
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════
+     SHARED TOPBAR
+══════════════════════════════════════════════ -->
+<header class="topbar">
+  <div class="topbar-logo" onclick="goHome()">
+    <div class="topbar-emblem">🏛</div>
+    <div class="topbar-text">
+      <div class="org">GREATER HYDERABAD MUNICIPAL CORPORATION</div>
+      <div class="sub">Pothole Reporting System</div>
+    </div>
+  </div>
+  <nav class="topbar-nav" id="publicNav">
+    <a onclick="goHome()" style="cursor:pointer;">Home</a>
+    <a onclick="openTrackReport()" style="cursor:pointer;">Track Report</a>
+    <a onclick="openStatistics()" style="cursor:pointer;">Statistics</a>
+    <a onclick="openContact()" style="cursor:pointer;">Contact</a>
+  </nav>
+  <div class="topbar-right">
+    <div class="user-chip" id="userChip">
+      <div class="user-avatar">👤</div>
+      <span id="userChipName">Ravi Kumar</span>
+    </div>
+    <span class="logout-link" id="logoutBtn" onclick="doLogout()" style="display:none">Logout ↩</span>
+    <button class="btn-nav outline" id="btnRegister" onclick="goLogin('register')">Register</button>
+    <button class="btn-nav" id="btnLogin" onclick="goLogin('login')">Login</button>
+  </div>
+</header>
+
+<!-- ══════════════════════════════════════════════
+     ① HOME PAGE
+══════════════════════════════════════════════ -->
+<div class="page active" id="page-home">
+
+  <!-- Ticker -->
+  <div class="ticker" style="margin-top:64px;">
+    <span class="ticker-inner">
+      🚧 GHMC is committed to pothole-free roads &nbsp;|&nbsp; Report potholes — fixed within 48 hours &nbsp;|&nbsp; Hyderabad Bhari Bhari Pothole-Free &nbsp;|&nbsp; Helpline: 1800-425-0425 &nbsp;|&nbsp; Download the GHMC App &nbsp;|&nbsp; Together, better roads for Hyderabad 🛣️
+    </span>
+  </div>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-text">
+      <div class="hero-badge">Public Infrastructure Portal</div>
+      <h1>Report <span>Potholes.</span><br>Get Roads Fixed.<br>Fast.</h1>
+      <p>GHMC's digital platform empowers Hyderabad citizens to report road damage instantly. Every report is tracked, assigned, and resolved — with full transparency.</p>
+      <div class="hero-btns">
+        <button class="btn-primary" onclick="goLogin('login')">🚨 Report a Pothole</button>
+        <button class="btn-outline-w" onclick="goLogin('login')">📍 Track My Report</button>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <div style="position:relative;">
+        <!-- MAIN SVG: Aerial road view with pothole repair crew -->
+        <svg class="hero-img-main" viewBox="0 0 700 320" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="hRoad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#1a1a1a"/><stop offset="100%" stop-color="#2c2c2c"/></linearGradient>
+            <linearGradient id="hSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0d1f35"/><stop offset="100%" stop-color="#1a3050"/></linearGradient>
+            <radialGradient id="hPh1" cx="50%" cy="40%" r="55%"><stop offset="0%" stop-color="#060606"/><stop offset="60%" stop-color="#141414"/><stop offset="100%" stop-color="#2a2a2a"/></radialGradient>
+            <radialGradient id="hPh2" cx="50%" cy="40%" r="55%"><stop offset="0%" stop-color="#080808"/><stop offset="55%" stop-color="#161616"/><stop offset="100%" stop-color="#282828"/></radialGradient>
+            <radialGradient id="hWater" cx="40%" cy="35%" r="65%"><stop offset="0%" stop-color="#2a6090"/><stop offset="100%" stop-color="#0e2a44"/></radialGradient>
+            <radialGradient id="hOrange" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#FF6B00" stop-opacity=".3"/><stop offset="100%" stop-color="#FF6B00" stop-opacity="0"/></radialGradient>
+            <filter id="hGlow"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+            <filter id="hShadow"><feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="#000" flood-opacity=".55"/></filter>
+          </defs>
+          <!-- Sky background -->
+          <rect width="700" height="320" fill="url(#hSky)"/>
+          <!-- Stars -->
+          <g fill="#fff" opacity=".45"><circle cx="30" cy="25" r="1.1"/><circle cx="85" cy="12" r="0.9"/><circle cx="155" cy="30" r="1.2"/><circle cx="230" cy="8" r="0.9"/><circle cx="310" cy="22" r="1.1"/><circle cx="400" cy="10" r="0.8"/><circle cx="475" cy="28" r="1.2"/><circle cx="560" cy="15" r="0.9"/><circle cx="630" cy="32" r="1.1"/><circle cx="680" cy="10" r="0.8"/><circle cx="120" cy="55" r="0.8"/><circle cx="280" cy="48" r="1.1"/><circle cx="450" cy="52" r="0.9"/><circle cx="590" cy="45" r="1.1"/></g>
+          <!-- Moon -->
+          <circle cx="620" cy="52" r="24" fill="#0e1f32" opacity=".6"/>
+          <circle cx="612" cy="46" r="19" fill="#c8dcea" opacity=".1"/>
+          <!-- City silhouette -->
+          <g fill="#0b1a2c">
+            <rect x="0" y="135" width="42" height="120"/><rect x="6" y="108" width="28" height="147"/><rect x="38" y="122" width="36" height="133"/><rect x="72" y="100" width="24" height="155"/><rect x="68" y="95" width="14" height="160"/><rect x="96" y="115" width="32" height="140"/><rect x="126" y="88" width="22" height="167"/><rect x="147" y="108" width="35" height="147"/>
+            <rect x="500" y="95" width="30" height="170"/><rect x="515" y="74" width="18" height="191"/><rect x="537" y="110" width="35" height="155"/><rect x="570" y="118" width="26" height="147"/><rect x="594" y="92" width="32" height="173"/><rect x="624" y="112" width="22" height="153"/><rect x="645" y="100" width="30" height="165"/><rect x="672" y="120" width="28" height="145"/>
+          </g>
+          <!-- Building windows -->
+          <g fill="#FF6B00" opacity=".5"><rect x="9" y="115" width="4" height="4"/><rect x="17" y="115" width="4" height="4"/><rect x="9" y="126" width="4" height="4"/><rect x="76" y="107" width="4" height="4"/><rect x="84" y="107" width="4" height="4"/><rect x="128" y="97" width="4" height="4"/><rect x="518" y="82" width="4" height="4"/><rect x="526" y="82" width="4" height="4"/><rect x="597" y="100" width="4" height="4"/><rect x="607" y="100" width="4" height="4"/><rect x="649" y="108" width="4" height="4"/></g>
+          <g fill="#ffe082" opacity=".28"><rect x="24" y="115" width="4" height="4"/><rect x="131" y="107" width="4" height="4"/><rect x="540" y="120" width="4" height="4"/><rect x="628" y="120" width="4" height="4"/></g>
+          <!-- Lamp glow -->
+          <ellipse cx="175" cy="215" rx="110" ry="80" fill="url(#hOrange)" opacity=".7"/>
+          <ellipse cx="525" cy="215" rx="110" ry="80" fill="url(#hOrange)" opacity=".7"/>
+          <!-- Lamp posts -->
+          <line x1="175" y1="222" x2="175" y2="315" stroke="#3a4a58" stroke-width="3.5"/>
+          <line x1="175" y1="222" x2="208" y2="213" stroke="#3a4a58" stroke-width="2.5"/>
+          <circle cx="211" cy="211" r="7" fill="#ffe082" opacity=".9" filter="url(#hGlow)"/>
+          <line x1="525" y1="222" x2="525" y2="315" stroke="#3a4a58" stroke-width="3.5"/>
+          <line x1="525" y1="222" x2="492" y2="213" stroke="#3a4a58" stroke-width="2.5"/>
+          <circle cx="489" cy="211" r="7" fill="#ffe082" opacity=".9" filter="url(#hGlow)"/>
+          <!-- Sidewalks -->
+          <rect x="0" y="258" width="700" height="62" fill="#181818"/>
+          <!-- Road surface -->
+          <rect x="118" y="208" width="464" height="112" fill="url(#hRoad)"/>
+          <rect x="118" y="208" width="464" height="5" fill="#363636"/>
+          <!-- Road markings -->
+          <g stroke="#FF6B00" stroke-width="2.2" stroke-dasharray="26,16" opacity=".42"><line x1="350" y1="213" x2="350" y2="320"/></g>
+          <g stroke="#3a3a3a" stroke-width="1.6" stroke-dasharray="16,12" opacity=".45"><line x1="234" y1="213" x2="234" y2="320"/><line x1="466" y1="213" x2="466" y2="320"/></g>
+
+          <!-- === POTHOLE 1 — large, left lane === -->
+          <ellipse cx="225" cy="268" rx="52" ry="34" fill="url(#hPh1)" filter="url(#hShadow)"/>
+          <ellipse cx="225" cy="268" rx="52" ry="34" fill="none" stroke="#383838" stroke-width="2.5"/>
+          <g stroke="#424242" stroke-width="1.4" opacity=".65">
+            <line x1="182" y1="257" x2="166" y2="246"/><line x1="270" y1="258" x2="286" y2="247"/>
+            <line x1="205" y1="299" x2="197" y2="313"/><line x1="246" y1="299" x2="255" y2="312"/>
+            <line x1="177" y1="272" x2="161" y2="275"/><line x1="275" y1="271" x2="290" y2="273"/>
+          </g>
+          <ellipse cx="225" cy="273" rx="34" ry="20" fill="url(#hWater)" opacity=".62"/>
+          <ellipse cx="217" cy="267" rx="16" ry="9" fill="#2a5a88" opacity=".38"/>
+          <rect x="196" y="308" width="58" height="17" rx="3" fill="#FF6B00" opacity=".94"/>
+          <text x="225" y="320" fill="#fff" font-size="8.5" font-family="Rajdhani,sans-serif" font-weight="700" text-anchor="middle" letter-spacing="1">POTHOLE #1</text>
+
+          <!-- === POTHOLE 2 — medium, right lane === -->
+          <ellipse cx="490" cy="248" rx="38" ry="25" fill="url(#hPh2)" filter="url(#hShadow)"/>
+          <ellipse cx="490" cy="248" rx="38" ry="25" fill="none" stroke="#363636" stroke-width="2.2"/>
+          <g stroke="#404040" stroke-width="1.3" opacity=".6">
+            <line x1="459" y1="238" x2="445" y2="229"/><line x1="523" y1="239" x2="537" y2="230"/>
+            <line x1="472" y1="271" x2="464" y2="283"/><line x1="508" y1="270" x2="516" y2="282"/>
+          </g>
+          <ellipse cx="490" cy="252" rx="24" ry="14" fill="url(#hWater)" opacity=".55"/>
+          <rect x="463" y="279" width="54" height="16" rx="3" fill="#FF6B00" opacity=".94"/>
+          <text x="490" y="291" fill="#fff" font-size="8.5" font-family="Rajdhani,sans-serif" font-weight="700" text-anchor="middle" letter-spacing="1">POTHOLE #2</text>
+
+          <!-- === POTHOLE 3 — small, far right === -->
+          <ellipse cx="580" cy="292" rx="24" ry="15" fill="url(#hPh1)" filter="url(#hShadow)"/>
+          <ellipse cx="580" cy="292" rx="24" ry="15" fill="none" stroke="#333" stroke-width="1.8"/>
+          <ellipse cx="580" cy="296" rx="13" ry="8" fill="url(#hWater)" opacity=".48"/>
+
+          <!-- GHMC Truck -->
+          <g transform="translate(122,210)">
+            <rect x="0" y="0" width="68" height="38" rx="3.5" fill="#1a3a7a"/>
+            <rect x="42" y="-13" width="29" height="16" rx="2.5" fill="#1e4a92"/>
+            <rect x="44" y="-10" width="12" height="11" rx="2" fill="#5a9ad0" opacity=".7"/>
+            <rect x="58" y="-10" width="10" height="11" rx="2" fill="#5a9ad0" opacity=".65"/>
+            <rect x="3" y="6" width="35" height="20" rx="2" fill="#0e2860"/>
+            <text x="20.5" y="20" fill="#FF6B00" font-size="7.5" font-family="Rajdhani,sans-serif" font-weight="700" text-anchor="middle" letter-spacing="1">GHMC</text>
+            <rect x="0" y="24" width="68" height="4.5" fill="#FF6B00"/>
+            <circle cx="13" cy="38" r="8" fill="#151515"/><circle cx="13" cy="38" r="3.5" fill="#2e2e2e"/>
+            <circle cx="51" cy="38" r="8" fill="#151515"/><circle cx="51" cy="38" r="3.5" fill="#2e2e2e"/>
+            <rect x="46" y="-18" width="6" height="5" rx="1.5" fill="#FF6B00" opacity=".9" filter="url(#hGlow)"/>
+          </g>
+
+          <!-- Worker 1 -->
+          <g transform="translate(338,212)">
+            <ellipse cx="0" cy="25" rx="10" ry="15" fill="#FF6B00"/>
+            <rect x="-10" y="19" width="20" height="3.5" fill="#ffe082" opacity=".8"/>
+            <rect x="-10" y="30" width="20" height="3.5" fill="#ffe082" opacity=".8"/>
+            <circle cx="0" cy="6" r="8" fill="#daa070"/>
+            <rect x="-10" y="-1" width="20" height="6" rx="3" fill="#FF6B00"/>
+            <rect x="-12" y="3" width="24" height="3.5" rx="1.8" fill="#c94800"/>
+            <line x1="-10" y1="19" x2="-20" y2="32" stroke="#FF6B00" stroke-width="4.5" stroke-linecap="round"/>
+            <line x1="10" y1="19" x2="20" y2="32" stroke="#FF6B00" stroke-width="4.5" stroke-linecap="round"/>
+            <line x1="20" y1="32" x2="18" y2="56" stroke="#666" stroke-width="2.8"/>
+            <ellipse cx="18" cy="58" rx="6" ry="3.5" fill="#555"/>
+            <line x1="-3" y1="40" x2="-5" y2="58" stroke="#1a1a1a" stroke-width="4.5" stroke-linecap="round"/>
+            <line x1="3" y1="40" x2="5" y2="58" stroke="#1a1a1a" stroke-width="4.5" stroke-linecap="round"/>
+          </g>
+
+          <!-- Worker 2 (crouching) -->
+          <g transform="translate(272,250)">
+            <ellipse cx="0" cy="18" rx="9" ry="12" fill="#e65100"/>
+            <rect x="-9" y="13" width="18" height="3" fill="#ffe082" opacity=".75"/>
+            <rect x="-9" y="22" width="18" height="3" fill="#ffe082" opacity=".75"/>
+            <circle cx="0" cy="5" r="7" fill="#daa070"/>
+            <rect x="-9" y="-1" width="18" height="5.5" rx="2.5" fill="#e65100"/>
+            <rect x="-10" y="2" width="20" height="3" rx="1.5" fill="#bf360c"/>
+            <line x1="-9" y1="13" x2="-17" y2="23" stroke="#e65100" stroke-width="4" stroke-linecap="round"/>
+            <line x1="9" y1="13" x2="17" y2="20" stroke="#e65100" stroke-width="4" stroke-linecap="round"/>
+            <line x1="-3" y1="30" x2="-10" y2="43" stroke="#1a1a1a" stroke-width="4" stroke-linecap="round"/>
+            <line x1="3" y1="30" x2="8" y2="43" stroke="#1a1a1a" stroke-width="4" stroke-linecap="round"/>
+          </g>
+
+          <!-- Cones -->
+          <g transform="translate(170,240)"><polygon points="8,0 16,28 0,28" fill="#FF6B00"/><rect x="1.5" y="9" width="13" height="2.5" fill="#fff" opacity=".9"/><rect x="3" y="17" width="10" height="2.5" fill="#fff" opacity=".9"/><rect x="-3" y="28" width="22" height="3.5" rx="1.8" fill="#3a3a3a"/></g>
+          <g transform="translate(440,230)"><polygon points="8,0 16,28 0,28" fill="#FF6B00"/><rect x="1.5" y="9" width="13" height="2.5" fill="#fff" opacity=".9"/><rect x="3" y="17" width="10" height="2.5" fill="#fff" opacity=".9"/><rect x="-3" y="28" width="22" height="3.5" rx="1.8" fill="#3a3a3a"/></g>
+          <g transform="translate(545,265)"><polygon points="7,0 14,24 0,24" fill="#FF6B00"/><rect x="1" y="8" width="12" height="2" fill="#fff" opacity=".9"/><rect x="2.5" y="15" width="9" height="2" fill="#fff" opacity=".9"/><rect x="-2" y="24" width="18" height="3" rx="1.5" fill="#3a3a3a"/></g>
+
+          <!-- Road sign -->
+          <g transform="translate(598,188)">
+            <line x1="12" y1="0" x2="12" y2="52" stroke="#5a6a7a" stroke-width="2.5"/>
+            <rect x="0" y="0" width="58" height="30" rx="3.5" fill="#FF6B00"/>
+            <text x="29" y="10" fill="#fff" font-size="7" font-family="Rajdhani,sans-serif" font-weight="700" text-anchor="middle" letter-spacing=".5">ROAD WORK</text>
+            <text x="29" y="19" fill="#fff" font-size="7" font-family="Rajdhani,sans-serif" font-weight="700" text-anchor="middle" letter-spacing=".5">AHEAD</text>
+            <text x="29" y="27" fill="#ffe082" font-size="5.5" font-family="Rajdhani,sans-serif" font-weight="600" text-anchor="middle">⚠ GHMC</text>
+          </g>
+
+          <!-- Repair materials — asphalt patch area -->
+          <ellipse cx="225" cy="268" rx="30" ry="18" fill="#2a2a2a" opacity=".5" stroke="#555" stroke-width="1" stroke-dasharray="4,3"/>
+          <text x="225" y="272" fill="#888" font-size="7" font-family="Rajdhani,sans-serif" text-anchor="middle" letter-spacing=".5">UNDER REPAIR</text>
+        </svg>
+        <div class="hero-tag">🏗 Active Repair Zones</div>
+      </div>
+      <div class="hero-img-row">
+        <!-- SMALL SVG 1: City road with potholes top-down view -->
+        <svg class="hero-img-sm" viewBox="0 0 400 148" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="sm1sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0a1828"/><stop offset="100%" stop-color="#162540"/></linearGradient>
+            <linearGradient id="sm1road" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#1c1c1c"/><stop offset="100%" stop-color="#252525"/></linearGradient>
+            <radialGradient id="sm1ph" cx="50%" cy="45%" r="55%"><stop offset="0%" stop-color="#050505"/><stop offset="60%" stop-color="#121212"/><stop offset="100%" stop-color="#262626"/></radialGradient>
+            <radialGradient id="sm1w" cx="40%" cy="35%" r="60%"><stop offset="0%" stop-color="#1e4a78"/><stop offset="100%" stop-color="#0c2238"/></radialGradient>
+          </defs>
+          <rect width="400" height="148" fill="url(#sm1sky)"/>
+          <!-- City buildings low silhouette -->
+          <g fill="#081422"><rect x="0" y="55" width="30" height="93"/><rect x="5" y="40" width="20" height="108"/><rect x="28" y="48" width="25" height="100"/><rect x="52" y="35" width="18" height="113"/><rect x="68" y="52" width="22" height="96"/><rect x="310" y="42" width="20" height="106"/><rect x="328" y="30" width="16" height="118"/><rect x="343" y="50" width="24" height="98"/><rect x="366" y="38" width="18" height="110"/><rect x="382" y="55" width="18" height="93"/></g>
+          <g fill="#FF6B00" opacity=".4"><rect x="8" y="47" width="3" height="3"/><rect x="14" y="47" width="3" height="3"/><rect x="56" y="42" width="3" height="3"/><rect x="332" y="37" width="3" height="3"/><rect x="370" y="45" width="3" height="3"/></g>
+          <!-- Sidewalk & road -->
+          <rect x="0" y="95" width="400" height="53" fill="#151515"/>
+          <rect x="72" y="68" width="256" height="80" fill="url(#sm1road)"/>
+          <rect x="72" y="68" width="256" height="4" fill="#303030"/>
+          <g stroke="#FF6B00" stroke-width="1.8" stroke-dasharray="18,10" opacity=".4"><line x1="200" y1="72" x2="200" y2="148"/></g>
+          <g stroke="#303030" stroke-width="1.3" stroke-dasharray="12,9" opacity=".4"><line x1="136" y1="72" x2="136" y2="148"/><line x1="264" y1="72" x2="264" y2="148"/></g>
+          <!-- Pothole left -->
+          <ellipse cx="148" cy="112" rx="30" ry="20" fill="url(#sm1ph)"/>
+          <ellipse cx="148" cy="112" rx="30" ry="20" fill="none" stroke="#2e2e2e" stroke-width="2"/>
+          <g stroke="#333" stroke-width="1.1" opacity=".6"><line x1="124" y1="104" x2="113" y2="97"/><line x1="173" y1="104" x2="184" y2="97"/><line x1="132" y1="130" x2="126" y2="140"/><line x1="165" y1="130" x2="171" y2="140"/></g>
+          <ellipse cx="148" cy="116" rx="18" ry="11" fill="url(#sm1w)" opacity=".6"/>
+          <rect x="123" y="137" width="50" height="14" rx="2.5" fill="#FF6B00" opacity=".9"/>
+          <text x="148" y="148" fill="#fff" font-size="7.5" font-family="Rajdhani,sans-serif" font-weight="700" text-anchor="middle" letter-spacing=".8">REPORTED</text>
+          <!-- Pothole right -->
+          <ellipse cx="272" cy="96" rx="22" ry="14" fill="url(#sm1ph)"/>
+          <ellipse cx="272" cy="96" rx="22" ry="14" fill="none" stroke="#2c2c2c" stroke-width="1.8"/>
+          <ellipse cx="272" cy="99" rx="13" ry="8" fill="url(#sm1w)" opacity=".5"/>
+          <!-- Cone -->
+          <g transform="translate(102,90)"><polygon points="7,0 14,24 0,24" fill="#FF6B00"/><rect x="1" y="8" width="12" height="2" fill="#fff" opacity=".85"/><rect x="2" y="14" width="9" height="2" fill="#fff" opacity=".85"/></g>
+          <g transform="translate(248,78)"><polygon points="6,0 12,20 0,20" fill="#FF6B00"/><rect x="1" y="6" width="10" height="1.8" fill="#fff" opacity=".85"/><rect x="2" y="12" width="8" height="1.8" fill="#fff" opacity=".85"/></g>
+          <!-- Caption -->
+          <rect x="0" y="0" width="400" height="20" fill="rgba(0,0,0,0.3)"/>
+          <text x="10" y="14" fill="#FF6B00" font-size="9" font-family="Rajdhani,sans-serif" font-weight="700" letter-spacing="1">📍 CITY ROAD — ACTIVE POTHOLES</text>
+        </svg>
+
+        <!-- SMALL SVG 2: Repair crew at work -->
+        <svg class="hero-img-sm" viewBox="0 0 400 148" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="sm2bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0c1e32"/><stop offset="100%" stop-color="#1a3050"/></linearGradient>
+            <linearGradient id="sm2road" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#1a1a1a"/><stop offset="100%" stop-color="#232323"/></linearGradient>
+            <radialGradient id="sm2glow" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#FF6B00" stop-opacity=".35"/><stop offset="100%" stop-color="#FF6B00" stop-opacity="0"/></radialGradient>
+          </defs>
+          <rect width="400" height="148" fill="url(#sm2bg)"/>
+          <!-- Low buildings -->
+          <g fill="#081220"><rect x="0" y="50" width="28" height="98"/><rect x="4" y="38" width="18" height="110"/><rect x="26" y="44" width="22" height="104"/><rect x="46" y="32" width="16" height="116"/><rect x="61" y="48" width="20" height="100"/><rect x="320" y="40" width="18" height="108"/><rect x="337" y="28" width="15" height="120"/><rect x="350" y="46" width="22" height="102"/><rect x="371" y="36" width="16" height="112"/><rect x="386" y="52" width="14" height="96"/></g>
+          <g fill="#FF6B00" opacity=".35"><rect x="7" y="44" width="3" height="3"/><rect x="13" y="44" width="3" height="3"/><rect x="50" y="38" width="3" height="3"/><rect x="340" y="34" width="3" height="3"/><rect x="374" y="43" width="3" height="3"/></g>
+          <!-- Road -->
+          <rect x="0" y="90" width="400" height="58" fill="#141414"/>
+          <rect x="70" y="64" width="260" height="84" fill="url(#sm2road)"/>
+          <rect x="70" y="64" width="260" height="3.5" fill="#2e2e2e"/>
+          <g stroke="#FF6B00" stroke-width="1.6" stroke-dasharray="16,10" opacity=".38"><line x1="200" y1="67" x2="200" y2="148"/></g>
+          <!-- Repair zone glow -->
+          <ellipse cx="200" cy="115" rx="80" ry="40" fill="url(#sm2glow)"/>
+          <!-- Pothole being repaired -->
+          <ellipse cx="200" cy="115" rx="35" ry="22" fill="#0a0a0a"/>
+          <ellipse cx="200" cy="115" rx="35" ry="22" fill="none" stroke="#3a3a3a" stroke-width="2.2"/>
+          <ellipse cx="200" cy="118" rx="22" ry="13" fill="#1a1a1a" stroke="#FF6B00" stroke-width="1" stroke-dasharray="4,3"/>
+          <text x="200" y="122" fill="#FF6B00" font-size="7" font-family="Rajdhani,sans-serif" font-weight="700" text-anchor="middle" opacity=".8">REPAIR IN PROGRESS</text>
+          <!-- Workers -->
+          <!-- Worker A -->
+          <g transform="translate(148,68)">
+            <ellipse cx="0" cy="22" rx="9" ry="13" fill="#FF6B00"/>
+            <rect x="-9" y="17" width="18" height="3" fill="#ffe082" opacity=".8"/>
+            <rect x="-9" y="26" width="18" height="3" fill="#ffe082" opacity=".8"/>
+            <circle cx="0" cy="5.5" r="7.5" fill="#d4956a"/>
+            <rect x="-9" y=".5" width="18" height="5.5" rx="2.8" fill="#FF6B00"/>
+            <rect x="-10" y="3" width="20" height="3" rx="1.5" fill="#c94800"/>
+            <line x1="-9" y1="17" x2="-18" y2="28" stroke="#FF6B00" stroke-width="4.5" stroke-linecap="round"/>
+            <line x1="9" y1="17" x2="18" y2="25" stroke="#FF6B00" stroke-width="4.5" stroke-linecap="round"/>
+            <line x1="18" y1="25" x2="17" y2="50" stroke="#666" stroke-width="2.5"/>
+            <ellipse cx="17" cy="52" rx="5.5" ry="3" fill="#555"/>
+            <line x1="-3" y1="35" x2="-4" y2="52" stroke="#111" stroke-width="4" stroke-linecap="round"/>
+            <line x1="3" y1="35" x2="4" y2="52" stroke="#111" stroke-width="4" stroke-linecap="round"/>
+          </g>
+          <!-- Worker B -->
+          <g transform="translate(248,70)">
+            <ellipse cx="0" cy="22" rx="9" ry="13" fill="#e65100"/>
+            <rect x="-9" y="17" width="18" height="3" fill="#ffe082" opacity=".75"/>
+            <rect x="-9" y="26" width="18" height="3" fill="#ffe082" opacity=".75"/>
+            <circle cx="0" cy="5.5" r="7.5" fill="#d4956a"/>
+            <rect x="-9" y=".5" width="18" height="5.5" rx="2.8" fill="#e65100"/>
+            <rect x="-10" y="3" width="20" height="3" rx="1.5" fill="#bf360c"/>
+            <line x1="-9" y1="17" x2="-16" y2="27" stroke="#e65100" stroke-width="4" stroke-linecap="round"/>
+            <line x1="9" y1="17" x2="19" y2="28" stroke="#e65100" stroke-width="4" stroke-linecap="round"/>
+            <line x1="19" y1="28" x2="18" y2="50" stroke="#666" stroke-width="2.5"/>
+            <ellipse cx="18" cy="52" rx="5.5" ry="3" fill="#555"/>
+            <line x1="-3" y1="35" x2="-5" y2="52" stroke="#111" stroke-width="4" stroke-linecap="round"/>
+            <line x1="3" y1="35" x2="5" y2="52" stroke="#111" stroke-width="4" stroke-linecap="round"/>
+          </g>
+          <!-- Cones around repair zone -->
+          <g transform="translate(156,92)"><polygon points="7,0 14,24 0,24" fill="#FF6B00"/><rect x="1" y="8" width="12" height="2" fill="#fff" opacity=".85"/><rect x="2" y="14" width="9" height="2" fill="#fff" opacity=".85"/></g>
+          <g transform="translate(228,92)"><polygon points="7,0 14,24 0,24" fill="#FF6B00"/><rect x="1" y="8" width="12" height="2" fill="#fff" opacity=".85"/><rect x="2" y="14" width="9" height="2" fill="#fff" opacity=".85"/></g>
+          <g transform="translate(185,67)"><polygon points="6,0 12,20 0,20" fill="#FF6B00"/><rect x="1" y="6" width="10" height="1.8" fill="#fff" opacity=".85"/></g>
+          <g transform="translate(208,67)"><polygon points="6,0 12,20 0,20" fill="#FF6B00"/><rect x="1" y="6" width="10" height="1.8" fill="#fff" opacity=".85"/></g>
+          <!-- Asphalt bag + tools on ground -->
+          <rect x="110" y="104" width="28" height="18" rx="3" fill="#222" stroke="#444" stroke-width="1.2"/>
+          <text x="124" y="116" fill="#888" font-size="6.5" font-family="Rajdhani,sans-serif" text-anchor="middle">ASPHALT</text>
+          <rect x="262" y="106" width="22" height="12" rx="2" fill="#333" stroke="#555" stroke-width="1"/>
+          <!-- Caption -->
+          <rect x="0" y="0" width="400" height="20" fill="rgba(0,0,0,0.3)"/>
+          <text x="10" y="14" fill="#FF6B00" font-size="9" font-family="Rajdhani,sans-serif" font-weight="700" letter-spacing="1">🔧 GHMC REPAIR CREW — ON SITE</text>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- Stats Bar -->
+  <div class="stats-bar">
+    <div class="stat-cell"><div class="stat-num">12,840+</div><div class="stat-lbl">Potholes Fixed</div></div>
+    <div class="stat-cell"><div class="stat-num">48 hrs</div><div class="stat-lbl">Avg Response</div></div>
+    <div class="stat-cell"><div class="stat-num">94%</div><div class="stat-lbl">Resolution Rate</div></div>
+    <div class="stat-cell"><div class="stat-num">3.2L+</div><div class="stat-lbl">Citizens</div></div>
+  </div>
+
+  <!-- How It Works -->
+  <section class="section">
+    <div class="sec-title">How It Works</div>
+    <div class="sec-line"></div>
+    <div class="steps-grid">
+      <div class="step-card"><div class="step-num">1</div><div class="step-icon">📝</div><h3>Register & Login</h3><p>Create your citizen account to access the reporting dashboard securely.</p></div>
+      <div class="step-card"><div class="step-num">2</div><div class="step-icon">📍</div><h3>Locate & Report</h3><p>Enter the address, upload photos, choose severity. Done in under 2 minutes.</p></div>
+      <div class="step-card"><div class="step-num">3</div><div class="step-icon">📡</div><h3>GHMC Notified</h3><p>Report reaches the nearest ward office instantly via our priority queue system.</p></div>
+      <div class="step-card"><div class="step-num">4</div><div class="step-icon">✅</div><h3>Track & Verify</h3><p>Follow repair progress in real-time. Confirm completion once done.</p></div>
+    </div>
+  </section>
+
+  <!-- Gallery -->
+  <section class="section" style="padding-top:0;">
+    <div class="sec-title">Roads We Protect</div>
+    <div class="sec-line"></div>
+    <div class="gallery">
+      <!-- TALL: Inner Ring Road aerial view -->
+      <div class="g-cell tall">
+        <svg width="100%" height="100%" viewBox="0 0 400 410" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+          <defs>
+            <linearGradient id="g1sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#091525"/><stop offset="100%" stop-color="#152235"/></linearGradient>
+            <linearGradient id="g1rd" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#191919"/><stop offset="100%" stop-color="#242424"/></linearGradient>
+            <radialGradient id="g1ph" cx="50%" cy="45%" r="55%"><stop offset="0%" stop-color="#060606"/><stop offset="55%" stop-color="#111"/><stop offset="100%" stop-color="#252525"/></radialGradient>
+            <radialGradient id="g1w" cx="40%" cy="35%" r="65%"><stop offset="0%" stop-color="#1e4a78"/><stop offset="100%" stop-color="#0a2038"/></radialGradient>
+            <radialGradient id="g1lamp" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#ffe082" stop-opacity=".2"/><stop offset="100%" stop-color="#ffe082" stop-opacity="0"/></radialGradient>
+            <filter id="g1glow"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          </defs>
+          <rect width="400" height="410" fill="url(#g1sky)"/>
+          <!-- Stars -->
+          <g fill="#fff" opacity=".4"><circle cx="25" cy="18" r="1"/><circle cx="70" cy="8" r=".8"/><circle cx="130" cy="22" r="1.1"/><circle cx="200" cy="6" r=".8"/><circle cx="270" cy="18" r="1"/><circle cx="340" cy="10" r=".8"/><circle cx="380" cy="26" r="1.1"/><circle cx="100" cy="45" r=".8"/><circle cx="310" cy="40" r="1"/></g>
+          <!-- Moon -->
+          <circle cx="340" cy="38" r="20" fill="#0c1c2e" opacity=".65"/>
+          <circle cx="333" cy="32" r="15" fill="#c0d4e8" opacity=".1"/>
+          <!-- Buildings -->
+          <g fill="#0a1828"><rect x="0" y="80" width="35" height="250"/><rect x="4" y="60" width="22" height="270"/><rect x="32" y="70" width="28" height="260"/><rect x="58" y="52" width="18" height="278"/><rect x="74" y="66" width="24" height="264"/><rect x="296" y="56" width="20" height="274"/><rect x="314" y="40" width="16" height="290"/><rect x="328" y="62" width="26" height="268"/><rect x="352" y="50" width="20" height="280"/><rect x="370" y="68" width="30" height="262"/></g>
+          <g fill="#FF6B00" opacity=".45"><rect x="7" y="68" width="3" height="3"/><rect x="14" y="68" width="3" height="3"/><rect x="62" y="60" width="3" height="3"/><rect x="317" y="48" width="3" height="3"/><rect x="355" y="58" width="3" height="3"/><rect x="374" y="76" width="3" height="3"/></g>
+          <g fill="#ffe082" opacity=".25"><rect x="22" y="68" width="3" height="3"/><rect x="77" y="74" width="3" height="3"/><rect x="332" y="70" width="3" height="3"/></g>
+          <!-- Lamp glow -->
+          <ellipse cx="105" cy="230" rx="100" ry="70" fill="url(#g1lamp)"/>
+          <ellipse cx="295" cy="230" rx="100" ry="70" fill="url(#g1lamp)"/>
+          <!-- Lamp posts -->
+          <line x1="105" y1="236" x2="105" y2="410" stroke="#2e3e4e" stroke-width="3"/>
+          <line x1="105" y1="236" x2="132" y2="228" stroke="#2e3e4e" stroke-width="2.5"/>
+          <circle cx="135" cy="226" r="6" fill="#ffe082" opacity=".9" filter="url(#g1glow)"/>
+          <line x1="295" y1="236" x2="295" y2="410" stroke="#2e3e4e" stroke-width="3"/>
+          <line x1="295" y1="236" x2="268" y2="228" stroke="#2e3e4e" stroke-width="2.5"/>
+          <circle cx="265" cy="226" r="6" fill="#ffe082" opacity=".9" filter="url(#g1glow)"/>
+          <!-- Sidewalks -->
+          <rect x="0" y="295" width="400" height="115" fill="#111"/>
+          <!-- Road -->
+          <rect x="96" y="196" width="208" height="214" fill="url(#g1rd)"/>
+          <rect x="96" y="196" width="208" height="4" fill="#2e2e2e"/>
+          <!-- Road markings -->
+          <g stroke="#FF6B00" stroke-width="2" stroke-dasharray="22,14" opacity=".4"><line x1="200" y1="200" x2="200" y2="410"/></g>
+          <g stroke="#2e2e2e" stroke-width="1.5" stroke-dasharray="14,10" opacity=".4"><line x1="148" y1="200" x2="148" y2="410"/><line x1="252" y1="200" x2="252" y2="410"/></g>
+          <!-- POTHOLE 1 large -->
+          <ellipse cx="168" cy="290" rx="40" ry="26" fill="url(#g1ph)"/>
+          <ellipse cx="168" cy="290" rx="40" ry="26" fill="none" stroke="#2c2c2c" stroke-width="2"/>
+          <g stroke="#363636" stroke-width="1.2" opacity=".6"><line x1="135" y1="280" x2="121" y2="271"/><line x1="202" y1="281" x2="216" y2="272"/><line x1="148" y1="313" x2="140" y2="325"/><line x1="188" y1="313" x2="196" y2="324"/></g>
+          <ellipse cx="168" cy="294" rx="25" ry="15" fill="url(#g1w)" opacity=".58"/>
+          <rect x="142" y="321" width="52" height="15" rx="2.5" fill="#FF6B00" opacity=".92"/>
+          <text x="168" y="332" fill="#fff" font-size="8" font-family="Rajdhani,sans-serif" font-weight="700" text-anchor="middle" letter-spacing=".8">POTHOLE</text>
+          <!-- POTHOLE 2 -->
+          <ellipse cx="238" cy="240" rx="28" ry="18" fill="url(#g1ph)"/>
+          <ellipse cx="238" cy="240" rx="28" ry="18" fill="none" stroke="#2a2a2a" stroke-width="1.8"/>
+          <ellipse cx="238" cy="244" rx="17" ry="10" fill="url(#g1w)" opacity=".5"/>
+          <rect x="214" y="263" width="48" height="14" rx="2.5" fill="#FF6B00" opacity=".9"/>
+          <text x="238" y="274" fill="#fff" font-size="7.5" font-family="Rajdhani,sans-serif" font-weight="700" text-anchor="middle" letter-spacing=".8">POTHOLE</text>
+          <!-- POTHOLE 3 small -->
+          <ellipse cx="175" cy="370" rx="20" ry="13" fill="url(#g1ph)"/>
+          <ellipse cx="175" cy="370" rx="20" ry="13" fill="none" stroke="#282828" stroke-width="1.5"/>
+          <ellipse cx="175" cy="373" rx="11" ry="7" fill="url(#g1w)" opacity=".45"/>
+          <!-- GHMC Van -->
+          <g transform="translate(97,197)">
+            <rect x="0" y="0" width="55" height="32" rx="3" fill="#1a3a7a"/>
+            <rect x="35" y="-11" width="22" height="14" rx="2" fill="#1e4a90"/>
+            <rect x="37" y="-9" width="9" height="10" rx="1.5" fill="#5090c0" opacity=".7"/>
+            <rect x="48" y="-9" width="8" height="10" rx="1.5" fill="#5090c0" opacity=".65"/>
+            <rect x="2" y="5" width="28" height="18" rx="1.5" fill="#0e2860"/>
+            <text x="16" y="17" fill="#FF6B00" font-size="6.5" font-family="Rajdhani,sans-serif" font-weight="700" text-anchor="middle" letter-spacing=".8">GHMC</text>
+            <rect x="0" y="21" width="55" height="4" fill="#FF6B00"/>
+            <circle cx="11" cy="32" r="7" fill="#111"/><circle cx="11" cy="32" r="3" fill="#282828"/>
+            <circle cx="41" cy="32" r="7" fill="#111"/><circle cx="41" cy="32" r="3" fill="#282828"/>
+            <rect x="38" y="-15" width="5" height="4" rx="1" fill="#FF6B00" opacity=".9" filter="url(#g1glow)"/>
+          </g>
+          <!-- Cones -->
+          <g transform="translate(124,265)"><polygon points="7,0 14,25 0,25" fill="#FF6B00"/><rect x="1" y="8" width="12" height="2.2" fill="#fff" opacity=".85"/><rect x="2.5" y="15" width="9" height="2.2" fill="#fff" opacity=".85"/><rect x="-3" y="25" width="20" height="3.5" rx="1.5" fill="#333"/></g>
+          <g transform="translate(205,220)"><polygon points="6,0 12,21 0,21" fill="#FF6B00"/><rect x="1" y="7" width="10" height="1.8" fill="#fff" opacity=".85"/><rect x="2" y="13" width="8" height="1.8" fill="#fff" opacity=".85"/></g>
+          <!-- Worker -->
+          <g transform="translate(230,196)">
+            <ellipse cx="0" cy="20" rx="8" ry="11" fill="#FF6B00"/>
+            <rect x="-8" y="15" width="16" height="3" fill="#ffe082" opacity=".8"/>
+            <rect x="-8" y="24" width="16" height="3" fill="#ffe082" opacity=".8"/>
+            <circle cx="0" cy="5" r="7" fill="#d4956a"/>
+            <rect x="-8" y=".5" width="16" height="5" rx="2.5" fill="#FF6B00"/>
+            <rect x="-9" y="2.5" width="18" height="2.5" rx="1.2" fill="#c94800"/>
+            <line x1="-8" y1="15" x2="-16" y2="24" stroke="#FF6B00" stroke-width="4" stroke-linecap="round"/>
+            <line x1="8" y1="15" x2="16" y2="22" stroke="#FF6B00" stroke-width="4" stroke-linecap="round"/>
+            <line x1="-2" y1="31" x2="-3" y2="46" stroke="#111" stroke-width="3.5" stroke-linecap="round"/>
+            <line x1="2" y1="31" x2="3" y2="46" stroke="#111" stroke-width="3.5" stroke-linecap="round"/>
+          </g>
+          <!-- Road sign -->
+          <g transform="translate(258,182)">
+            <line x1="10" y1="0" x2="10" y2="46" stroke="#445" stroke-width="2"/>
+            <rect x="0" y="0" width="50" height="26" rx="3" fill="#FF6B00"/>
+            <text x="25" y="9" fill="#fff" font-size="6.5" font-family="Rajdhani,sans-serif" font-weight="700" text-anchor="middle">ROAD WORK</text>
+            <text x="25" y="17" fill="#fff" font-size="6.5" font-family="Rajdhani,sans-serif" font-weight="700" text-anchor="middle">AHEAD</text>
+            <text x="25" y="24" fill="#ffe082" font-size="5" font-family="Rajdhani,sans-serif" font-weight="600" text-anchor="middle">⚠ GHMC</text>
+          </g>
+        </svg>
+        <div class="g-cap">📍 Inner Ring Road, Hyderabad</div>
+      </div>
+
+      <!-- Repair in Progress -->
+      <div class="g-cell">
+        <svg width="100%" height="100%" viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+          <defs>
+            <linearGradient id="g2bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0e1e30"/><stop offset="100%" stop-color="#1a2c44"/></linearGradient>
+            <radialGradient id="g2glow" cx="50%" cy="60%" r="55%"><stop offset="0%" stop-color="#FF6B00" stop-opacity=".4"/><stop offset="100%" stop-color="#FF6B00" stop-opacity="0"/></radialGradient>
+          </defs>
+          <rect width="400" height="200" fill="url(#g2bg)"/>
+          <g fill="#0a1828"><rect x="0" y="60" width="30" height="140"/><rect x="4" y="45" width="20" height="155"/><rect x="28" y="55" width="25" height="145"/><rect x="340" y="50" width="22" height="150"/><rect x="360" y="38" width="18" height="162"/><rect x="376" y="58" width="24" height="142"/></g>
+          <!-- Road -->
+          <rect x="0" y="105" width="400" height="95" fill="#141414"/>
+          <rect x="80" y="78" width="240" height="122" fill="#1e1e1e"/>
+          <rect x="80" y="78" width="240" height="3.5" fill="#2a2a2a"/>
+          <g stroke="#FF6B00" stroke-width="1.8" stroke-dasharray="18,12" opacity=".38"><line x1="200" y1="81" x2="200" y2="200"/></g>
+          <!-- Repair glow -->
+          <ellipse cx="200" cy="148" rx="85" ry="45" fill="url(#g2glow)"/>
+          <!-- Pothole -->
+          <ellipse cx="200" cy="148" rx="42" ry="27" fill="#090909"/>
+          <ellipse cx="200" cy="148" rx="42" ry="27" fill="none" stroke="#2e2e2e" stroke-width="2"/>
+          <ellipse cx="200" cy="152" rx="26" ry="16" fill="#111" stroke="#FF6B00" stroke-width="1" stroke-dasharray="4,3" opacity=".8"/>
+          <text x="200" y="156" fill="#FF6B00" font-size="7" font-family="Rajdhani,sans-serif" font-weight="700" text-anchor="middle" opacity=".9">FILLING IN PROGRESS</text>
+          <!-- Workers x3 -->
+          <g transform="translate(140,82)"><ellipse cx="0" cy="20" rx="8" ry="11" fill="#FF6B00"/><rect x="-8" y="14" width="16" height="3" fill="#ffe082" opacity=".8"/><circle cx="0" cy="5" r="7" fill="#d4956a"/><rect x="-8" y="0" width="16" height="5" rx="2.5" fill="#FF6B00"/><rect x="-9" y="2" width="18" height="2.5" rx="1.2" fill="#c94800"/><line x1="-8" y1="14" x2="-15" y2="23" stroke="#FF6B00" stroke-width="4" stroke-linecap="round"/><line x1="8" y1="14" x2="16" y2="21" stroke="#FF6B00" stroke-width="4" stroke-linecap="round"/><line x1="16" y1="21" x2="15" y2="42" stroke="#555" stroke-width="2.5"/><ellipse cx="15" cy="43" rx="5" ry="3" fill="#444"/><line x1="-2" y1="31" x2="-3" y2="46" stroke="#111" stroke-width="3.5" stroke-linecap="round"/><line x1="2" y1="31" x2="3" y2="46" stroke="#111" stroke-width="3.5" stroke-linecap="round"/></g>
+          <g transform="translate(245,85)"><ellipse cx="0" cy="18" rx="8" ry="10" fill="#e65100"/><rect x="-8" y="13" width="16" height="2.5" fill="#ffe082" opacity=".75"/><circle cx="0" cy="4" r="6.5" fill="#d4956a"/><rect x="-8" y="-.5" width="16" height="4.5" rx="2.2" fill="#e65100"/><rect x="-9" y="1.5" width="18" height="2.5" rx="1.2" fill="#bf360c"/><line x1="-8" y1="13" x2="-14" y2="21" stroke="#e65100" stroke-width="3.5" stroke-linecap="round"/><line x1="8" y1="13" x2="16" y2="20" stroke="#e65100" stroke-width="3.5" stroke-linecap="round"/><line x1="-2" y1="28" x2="-3" y2="42" stroke="#111" stroke-width="3.5" stroke-linecap="round"/><line x1="2" y1="28" x2="3" y2="42" stroke="#111" stroke-width="3.5" stroke-linecap="round"/></g>
+          <g transform="translate(192,80)"><ellipse cx="0" cy="17" rx="7" ry="10" fill="#FF6B00"/><circle cx="0" cy="4" r="6" fill="#d4956a"/><rect x="-7" y="0" width="14" height="4" rx="2" fill="#FF6B00"/><line x1="-7" y1="13" x2="-13" y2="21" stroke="#FF6B00" stroke-width="3.5" stroke-linecap="round"/><line x1="7" y1="13" x2="12" y2="19" stroke="#FF6B00" stroke-width="3.5" stroke-linecap="round"/><line x1="-2" y1="27" x2="-2" y2="40" stroke="#111" stroke-width="3" stroke-linecap="round"/><line x1="2" y1="27" x2="2" y2="40" stroke="#111" stroke-width="3" stroke-linecap="round"/></g>
+          <!-- Cones -->
+          <g transform="translate(150,115)"><polygon points="6,0 12,20 0,20" fill="#FF6B00"/><rect x="1" y="6" width="10" height="1.8" fill="#fff" opacity=".85"/><rect x="2" y="12" width="8" height="1.8" fill="#fff" opacity=".85"/></g>
+          <g transform="translate(238,115)"><polygon points="6,0 12,20 0,20" fill="#FF6B00"/><rect x="1" y="6" width="10" height="1.8" fill="#fff" opacity=".85"/><rect x="2" y="12" width="8" height="1.8" fill="#fff" opacity=".85"/></g>
+          <!-- Asphalt drum -->
+          <rect x="100" y="130" width="26" height="30" rx="3" fill="#1e1e1e" stroke="#333" stroke-width="1.5"/>
+          <rect x="103" y="135" width="20" height="10" rx="2" fill="#2a2a2a"/>
+          <text x="113" y="143" fill="#888" font-size="5.5" font-family="Rajdhani,sans-serif" text-anchor="middle">TAR</text>
+        </svg>
+        <div class="g-cap">🔧 Repair in Progress</div>
+      </div>
+
+      <!-- After Repair — smooth road -->
+      <div class="g-cell">
+        <svg width="100%" height="100%" viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+          <defs>
+            <linearGradient id="g3sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0a1e34"/><stop offset="100%" stop-color="#163050"/></linearGradient>
+            <linearGradient id="g3road" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#1a1a1a"/><stop offset="100%" stop-color="#232323"/></linearGradient>
+            <radialGradient id="g3patch" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#2a2a2a"/><stop offset="100%" stop-color="#1a1a1a"/></radialGradient>
+          </defs>
+          <rect width="400" height="200" fill="url(#g3sky)"/>
+          <g fill="#0a1828"><rect x="0" y="50" width="28" height="150"/><rect x="4" y="36" width="18" height="164"/><rect x="26" y="45" width="22" height="155"/><rect x="350" y="42" width="20" height="158"/><rect x="368" y="30" width="16" height="170"/><rect x="382" y="50" width="18" height="150"/></g>
+          <g fill="#22c55e" opacity=".3"><rect x="7" y="42" width="3" height="3"/><rect x="14" y="42" width="3" height="3"/><rect x="354" y="38" width="3" height="3"/><rect x="372" y="36" width="3" height="3"/></g>
+          <!-- Road -->
+          <rect x="0" y="112" width="400" height="88" fill="#111"/>
+          <rect x="78" y="82" width="244" height="118" fill="url(#g3road)"/>
+          <rect x="78" y="82" width="244" height="3.5" fill="#2a2a2a"/>
+          <g stroke="#FF6B00" stroke-width="2" stroke-dasharray="20,13" opacity=".45"><line x1="200" y1="85" x2="200" y2="200"/></g>
+          <g stroke="#2a2a2a" stroke-width="1.4" stroke-dasharray="13,10" opacity=".42"><line x1="139" y1="85" x2="139" y2="200"/><line x1="261" y1="85" x2="261" y2="200"/></g>
+          <!-- Patched area (repaired pothole) -->
+          <ellipse cx="185" cy="148" rx="38" ry="22" fill="url(#g3patch)" stroke="#333" stroke-width="1.5" stroke-dasharray="5,4"/>
+          <ellipse cx="255" cy="115" rx="26" ry="16" fill="url(#g3patch)" stroke="#333" stroke-width="1.5" stroke-dasharray="5,4"/>
+          <!-- Green checkmarks above patches -->
+          <circle cx="185" cy="118" r="14" fill="rgba(34,197,94,0.15)" stroke="#22c55e" stroke-width="1.5"/>
+          <text x="185" y="123" fill="#22c55e" font-size="12" text-anchor="middle">✓</text>
+          <circle cx="255" cy="92" r="12" fill="rgba(34,197,94,0.15)" stroke="#22c55e" stroke-width="1.5"/>
+          <text x="255" y="96" fill="#22c55e" font-size="10" text-anchor="middle">✓</text>
+          <!-- Resolved banner -->
+          <rect x="120" y="162" width="160" height="22" rx="4" fill="rgba(34,197,94,0.18)" stroke="#22c55e" stroke-width="1.2"/>
+          <text x="200" y="177" fill="#22c55e" font-size="9" font-family="Rajdhani,sans-serif" font-weight="700" text-anchor="middle" letter-spacing="1">✅ ROAD RESTORED</text>
+          <!-- GHMC stamp -->
+          <g transform="translate(300,88)">
+            <circle cx="0" cy="0" r="18" fill="none" stroke="#FF6B00" stroke-width="1.5"/>
+            <text x="0" y="-5" fill="#FF6B00" font-size="5.5" font-family="Rajdhani,sans-serif" font-weight="700" text-anchor="middle">GHMC</text>
+            <text x="0" y="4" fill="#FF6B00" font-size="4.5" font-family="Rajdhani,sans-serif" text-anchor="middle">CERTIFIED</text>
+            <text x="0" y="12" fill="#22c55e" font-size="8" text-anchor="middle">✓</text>
+          </g>
+        </svg>
+        <div class="g-cap">✅ After Repair</div>
+      </div>
+
+      <!-- Uptown Infrastructure -->
+      <div class="g-cell">
+        <svg width="100%" height="100%" viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+          <defs>
+            <linearGradient id="g4sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0c1a2e"/><stop offset="100%" stop-color="#1e3048"/></linearGradient>
+            <linearGradient id="g4rd" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#181818"/><stop offset="100%" stop-color="#222"/></linearGradient>
+          </defs>
+          <rect width="400" height="200" fill="url(#g4sky)"/>
+          <g fill="#fff" opacity=".35"><circle cx="20" cy="12" r=".8"/><circle cx="60" cy="6" r=".7"/><circle cx="110" cy="15" r="1"/><circle cx="200" cy="5" r=".7"/><circle cx="290" cy="12" r="1"/><circle cx="350" cy="8" r=".7"/><circle cx="385" cy="18" r=".9"/></g>
+          <!-- Tall buildings cityscape -->
+          <g fill="#0e1e30"><rect x="0" y="20" width="30" height="180"/><rect x="3" y="5" width="20" height="195"/><rect x="27" y="14" width="26" height="186"/><rect x="50" y="2" width="18" height="198"/><rect x="66" y="18" width="22" height="182"/><rect x="86" y="8" width="28" height="192"/><rect x="112" y="22" width="20" height="178"/></g>
+          <g fill="#112240"><rect x="260" y="18" width="24" height="182"/><rect x="282" y="4" width="20" height="196"/><rect x="300" y="14" width="28" height="186"/><rect x="326" y="2" width="22" height="198"/><rect x="346" y="16" width="18" height="184"/><rect x="362" y="8" width="26" height="192"/><rect x="386" y="22" width="14" height="178"/></g>
+          <!-- Lots of windows -->
+          <g fill="#FF6B00" opacity=".4"><rect x="6" y="12" width="3" height="3"/><rect x="12" y="12" width="3" height="3"/><rect x="6" y="22" width="3" height="3"/><rect x="12" y="22" width="3" height="3"/><rect x="32" y="20" width="3" height="3"/><rect x="39" y="20" width="3" height="3"/><rect x="54" y="9" width="3" height="3"/><rect x="62" y="9" width="3" height="3"/><rect x="90" y="15" width="3" height="3"/><rect x="98" y="15" width="3" height="3"/><rect x="265" y="24" width="3" height="3"/><rect x="273" y="24" width="3" height="3"/><rect x="286" y="10" width="3" height="3"/><rect x="304" y="20" width="3" height="3"/><rect x="312" y="20" width="3" height="3"/><rect x="330" y="8" width="3" height="3"/><rect x="350" y="22" width="3" height="3"/><rect x="367" y="14" width="3" height="3"/></g>
+          <g fill="#ffe082" opacity=".22"><rect x="18" y="12" width="3" height="3"/><rect x="44" y="20" width="3" height="3"/><rect x="72" y="8" width="3" height="3"/><rect x="280" y="10" width="3" height="3"/><rect x="338" y="8" width="3" height="3"/><rect x="375" y="14" width="3" height="3"/></g>
+          <!-- Wide road at base -->
+          <rect x="0" y="155" width="400" height="45" fill="#111"/>
+          <rect x="120" y="130" width="160" height="70" fill="url(#g4rd)"/>
+          <rect x="120" y="130" width="160" height="3" fill="#282828"/>
+          <g stroke="#FF6B00" stroke-width="1.8" stroke-dasharray="16,10" opacity=".4"><line x1="200" y1="133" x2="200" y2="200"/></g>
+          <!-- Stats overlay -->
+          <rect x="140" y="138" width="120" height="14" rx="3" fill="rgba(255,107,0,0.15)" stroke="rgba(255,107,0,0.4)" stroke-width="1"/>
+          <text x="200" y="149" fill="#FF6B00" font-size="7.5" font-family="Rajdhani,sans-serif" font-weight="700" text-anchor="middle" letter-spacing=".8">HYDERABAD UPTOWN</text>
+        </svg>
+        <div class="g-cap">🏙 Uptown Infrastructure</div>
+      </div>
+
+      <!-- Night Safety -->
+      <div class="g-cell">
+        <svg width="100%" height="100%" viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+          <defs>
+            <linearGradient id="g5sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#050d18"/><stop offset="100%" stop-color="#0e1e30"/></linearGradient>
+            <linearGradient id="g5rd" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#141414"/><stop offset="100%" stop-color="#1e1e1e"/></linearGradient>
+            <radialGradient id="g5lamp1" cx="50%" cy="30%" r="70%"><stop offset="0%" stop-color="#ffe082" stop-opacity=".3"/><stop offset="100%" stop-color="#ffe082" stop-opacity="0"/></radialGradient>
+            <radialGradient id="g5lamp2" cx="50%" cy="30%" r="70%"><stop offset="0%" stop-color="#ffe082" stop-opacity=".25"/><stop offset="100%" stop-color="#ffe082" stop-opacity="0"/></radialGradient>
+            <radialGradient id="g5ph" cx="50%" cy="45%" r="55%"><stop offset="0%" stop-color="#050505"/><stop offset="55%" stop-color="#101010"/><stop offset="100%" stop-color="#222"/></radialGradient>
+            <radialGradient id="g5w" cx="40%" cy="35%" r="65%"><stop offset="0%" stop-color="#1e4a78"/><stop offset="100%" stop-color="#0a2038"/></radialGradient>
+            <filter id="g5glow"><feGaussianBlur stdDeviation="3.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          </defs>
+          <rect width="400" height="200" fill="url(#g5sky)"/>
+          <!-- Stars (more stars for night scene) -->
+          <g fill="#fff" opacity=".5"><circle cx="15" cy="10" r="1.1"/><circle cx="45" cy="5" r=".8"/><circle cx="80" cy="14" r="1.2"/><circle cx="130" cy="4" r=".8"/><circle cx="175" cy="11" r="1.1"/><circle cx="225" cy="3" r=".8"/><circle cx="270" cy="13" r="1.2"/><circle cx="318" cy="6" r=".8"/><circle cx="360" cy="14" r="1.1"/><circle cx="390" cy="4" r=".8"/><circle cx="55" cy="28" r=".8"/><circle cx="155" cy="24" r="1"/><circle cx="245" cy="26" r=".8"/><circle cx="335" cy="22" r="1"/></g>
+          <!-- Moon -->
+          <circle cx="360" cy="28" r="18" fill="#0c1a2c" opacity=".7"/>
+          <circle cx="354" cy="22" r="14" fill="#c0d4e8" opacity=".1"/>
+          <!-- Dark buildings with lit windows -->
+          <g fill="#080e18"><rect x="0" y="58" width="30" height="142"/><rect x="4" y="42" width="20" height="158"/><rect x="28" y="52" width="26" height="148"/><rect x="340" y="48" width="22" height="152"/><rect x="360" y="36" width="18" height="164"/><rect x="376" y="56" width="24" height="144"/></g>
+          <g fill="#FF6B00" opacity=".5"><rect x="8" y="50" width="3" height="3"/><rect x="15" y="50" width="3" height="3"/><rect x="8" y="62" width="3" height="3"/><rect x="32" y="58" width="3" height="3"/><rect x="344" y="55" width="3" height="3"/><rect x="352" y="55" width="3" height="3"/><rect x="364" y="43" width="3" height="3"/><rect x="380" y="63" width="3" height="3"/></g>
+          <g fill="#ffe082" opacity=".3"><rect x="22" y="50" width="3" height="3"/><rect x="42" y="58" width="3" height="3"/><rect x="360" y="43" width="3" height="3"/><rect x="388" y="63" width="3" height="3"/></g>
+          <!-- Lamp 1 glow -->
+          <ellipse cx="138" cy="110" rx="95" ry="60" fill="url(#g5lamp1)"/>
+          <!-- Lamp 2 glow -->
+          <ellipse cx="262" cy="110" rx="95" ry="60" fill="url(#g5lamp2)"/>
+          <!-- Road -->
+          <rect x="0" y="135" width="400" height="65" fill="#0e0e0e"/>
+          <rect x="90" y="100" width="220" height="100" fill="url(#g5rd)"/>
+          <rect x="90" y="100" width="220" height="3" fill="#222"/>
+          <g stroke="#FF6B00" stroke-width="1.8" stroke-dasharray="16,11" opacity=".42"><line x1="200" y1="103" x2="200" y2="200"/></g>
+          <g stroke="#222" stroke-width="1.3" stroke-dasharray="12,9" opacity=".4"><line x1="145" y1="103" x2="145" y2="200"/><line x1="255" y1="103" x2="255" y2="200"/></g>
+          <!-- Lamp post 1 -->
+          <line x1="138" y1="116" x2="138" y2="200" stroke="#283848" stroke-width="3"/>
+          <line x1="138" y1="116" x2="162" y2="108" stroke="#283848" stroke-width="2.5"/>
+          <circle cx="165" cy="106" r="6" fill="#ffe082" opacity=".92" filter="url(#g5glow)"/>
+          <!-- Lamp post 2 -->
+          <line x1="262" y1="116" x2="262" y2="200" stroke="#283848" stroke-width="3"/>
+          <line x1="262" y1="116" x2="238" y2="108" stroke="#283848" stroke-width="2.5"/>
+          <circle cx="235" cy="106" r="6" fill="#ffe082" opacity=".92" filter="url(#g5glow)"/>
+          <!-- Night pothole — dangerous -->
+          <ellipse cx="175" cy="160" rx="32" ry="20" fill="url(#g5ph)"/>
+          <ellipse cx="175" cy="160" rx="32" ry="20" fill="none" stroke="#1e1e1e" stroke-width="2"/>
+          <ellipse cx="175" cy="164" rx="19" ry="11" fill="url(#g5w)" opacity=".5"/>
+          <!-- Warning flasher on cone -->
+          <g transform="translate(136,135)"><polygon points="7,0 14,24 0,24" fill="#FF6B00"/><rect x="1" y="8" width="12" height="2" fill="#fff" opacity=".9"/><rect x="2" y="14" width="9" height="2" fill="#fff" opacity=".9"/><rect x="-2" y="24" width="18" height="3.5" rx="1.5" fill="#2a2a2a"/><circle cx="7" cy="-4" r="4" fill="#ff4444" opacity=".85" filter="url(#g5glow)"/></g>
+          <g transform="translate(213,136)"><polygon points="7,0 14,24 0,24" fill="#FF6B00"/><rect x="1" y="8" width="12" height="2" fill="#fff" opacity=".9"/><rect x="2" y="14" width="9" height="2" fill="#fff" opacity=".9"/><rect x="-2" y="24" width="18" height="3.5" rx="1.5" fill="#2a2a2a"/><circle cx="7" cy="-4" r="4" fill="#ff4444" opacity=".85" filter="url(#g5glow)"/></g>
+          <!-- Night warning sign -->
+          <rect x="270" y="106" width="38" height="30" rx="3" fill="#111" stroke="#FF6B00" stroke-width="1.5"/>
+          <text x="289" y="117" fill="#FF6B00" font-size="6" font-family="Rajdhani,sans-serif" font-weight="700" text-anchor="middle">NIGHT</text>
+          <text x="289" y="125" fill="#FF6B00" font-size="6" font-family="Rajdhani,sans-serif" font-weight="700" text-anchor="middle">HAZARD</text>
+          <text x="289" y="132" fill="#ffe082" font-size="8" text-anchor="middle">⚠</text>
+        </svg>
+        <div class="g-cap">🌙 Night Safety</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <div class="cta-strip">
+    <div>
+      <h2>Spotted a Pothole? Act Now.</h2>
+      <p>Every report protects a fellow citizen. Login to your GHMC account and file a complaint in under 2 minutes. Your road. Your right.</p>
+    </div>
+    <button class="btn-primary" style="font-size:1.1rem;padding:.9rem 2.8rem;white-space:nowrap;" onclick="goLogin('login')">Login &amp; Report →</button>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-left">© 2025 <span>Greater Hyderabad Municipal Corporation</span>. All rights reserved.<br><small style="color:#334;">Developed under Smart City Mission, Govt. of Telangana</small></div>
+    <div class="footer-right">🌺 JAI TELANGANA</div>
+  </footer>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     ② LOGIN PAGE
+══════════════════════════════════════════════ -->
+<div class="page" id="page-login">
+  <div class="login-left">
+    <!-- Illustrated Road Scene -->
+    <svg class="login-scene" viewBox="0 0 800 700" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+      <defs>
+        <linearGradient id="skyG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#07111e"/><stop offset="100%" stop-color="#122038"/></linearGradient>
+        <linearGradient id="roadG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#181818"/><stop offset="100%" stop-color="#242424"/></linearGradient>
+        <radialGradient id="lamp1" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#ffb300" stop-opacity="0.22"/><stop offset="100%" stop-color="#ffb300" stop-opacity="0"/></radialGradient>
+        <radialGradient id="ph1" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#080808"/><stop offset="65%" stop-color="#161616"/><stop offset="100%" stop-color="#2c2c2c"/></radialGradient>
+        <radialGradient id="water" cx="40%" cy="40%" r="60%"><stop offset="0%" stop-color="#1e4a78"/><stop offset="100%" stop-color="#0e2a44"/></radialGradient>
+        <filter id="glow"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <filter id="dropshadow"><feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="#000" flood-opacity="0.6"/></filter>
+      </defs>
+      <!-- Sky -->
+      <rect width="800" height="700" fill="url(#skyG)"/>
+      <!-- Stars -->
+      <g fill="#fff"><circle cx="40" cy="40" r="1.2" opacity=".5"/><circle cx="110" cy="22" r="1" opacity=".4"/><circle cx="180" cy="55" r="1.4" opacity=".5"/><circle cx="260" cy="18" r="1" opacity=".4"/><circle cx="340" cy="42" r="1.3" opacity=".5"/><circle cx="430" cy="12" r="1" opacity=".4"/><circle cx="510" cy="48" r="1.4" opacity=".5"/><circle cx="600" cy="28" r="1" opacity=".4"/><circle cx="680" cy="55" r="1.3" opacity=".5"/><circle cx="750" cy="18" r="1" opacity=".4"/><circle cx="140" cy="90" r="1" opacity=".3"/><circle cx="310" cy="75" r="1.3" opacity=".4"/><circle cx="480" cy="85" r="1" opacity=".3"/><circle cx="640" cy="95" r="1.2" opacity=".4"/></g>
+      <!-- Moon -->
+      <circle cx="680" cy="75" r="32" fill="#0e1e30" opacity=".7"/>
+      <circle cx="670" cy="68" r="26" fill="#d8e8f4" opacity=".1"/>
+      <!-- City silhouette -->
+      <g fill="#0c1a2a">
+        <rect x="0" y="310" width="55" height="220"/><rect x="8" y="260" width="38" height="270"/><rect x="50" y="290" width="48" height="240"/><rect x="95" y="245" width="32" height="285"/><rect x="88" y="235" width="18" height="295"/><rect x="125" y="275" width="42" height="255"/><rect x="165" y="215" width="28" height="315"/><rect x="192" y="255" width="46" height="275"/>
+        <rect x="600" y="230" width="38" height="300"/><rect x="618" y="190" width="24" height="340"/><rect x="648" y="255" width="46" height="275"/><rect x="690" y="268" width="32" height="262"/><rect x="718" y="225" width="42" height="305"/><rect x="758" y="262" width="28" height="268"/>
+      </g>
+      <!-- Building windows -->
+      <g fill="#FF6B00" opacity=".55"><rect x="12" y="272" width="5" height="5"/><rect x="21" y="272" width="5" height="5"/><rect x="12" y="285" width="5" height="5"/><rect x="98" y="252" width="5" height="5"/><rect x="108" y="252" width="5" height="5"/><rect x="169" y="228" width="5" height="5"/><rect x="622" y="204" width="5" height="5"/><rect x="632" y="204" width="5" height="5"/><rect x="722" y="238" width="5" height="5"/><rect x="734" y="238" width="5" height="5"/></g>
+      <g fill="#ffe082" opacity=".3"><rect x="30" y="272" width="5" height="5"/><rect x="168" y="242" width="5" height="5"/><rect x="652" y="268" width="5" height="5"/><rect x="762" y="275" width="5" height="5"/></g>
+      <!-- Street lamp glow overlays -->
+      <ellipse cx="110" cy="310" rx="120" ry="90" fill="url(#lamp1)"/>
+      <ellipse cx="690" cy="310" rx="120" ry="90" fill="url(#lamp1)"/>
+      <!-- Lamp post left -->
+      <line x1="110" y1="318" x2="110" y2="500" stroke="#3a4a5a" stroke-width="4"/>
+      <line x1="110" y1="318" x2="148" y2="308" stroke="#3a4a5a" stroke-width="3"/>
+      <circle cx="151" cy="306" r="9" fill="#ffe082" opacity=".92" filter="url(#glow)"/>
+      <ellipse cx="151" cy="316" rx="45" ry="22" fill="#ffe082" opacity=".07"/>
+      <!-- Lamp post right -->
+      <line x1="690" y1="318" x2="690" y2="500" stroke="#3a4a5a" stroke-width="4"/>
+      <line x1="690" y1="318" x2="652" y2="308" stroke="#3a4a5a" stroke-width="3"/>
+      <circle cx="649" cy="306" r="9" fill="#ffe082" opacity=".92" filter="url(#glow)"/>
+      <ellipse cx="649" cy="316" rx="45" ry="22" fill="#ffe082" opacity=".07"/>
+      <!-- Sidewalks -->
+      <rect x="0" y="490" width="800" height="210" fill="#1a1a1a"/>
+      <!-- Road -->
+      <rect x="130" y="435" width="540" height="265" fill="url(#roadG)"/>
+      <rect x="130" y="435" width="540" height="5" fill="#383838"/>
+      <!-- Road center dashes -->
+      <g stroke="#FF6B00" stroke-width="2.5" stroke-dasharray="28,18" opacity=".45"><line x1="400" y1="440" x2="400" y2="700"/></g>
+      <!-- Lane dividers -->
+      <g stroke="#444" stroke-width="1.8" stroke-dasharray="18,14" opacity=".4"><line x1="265" y1="440" x2="265" y2="700"/><line x1="535" y1="440" x2="535" y2="700"/></g>
+
+      <!-- ===== POTHOLE 1 — large centre-left ===== -->
+      <ellipse cx="295" cy="560" rx="58" ry="40" fill="url(#ph1)" filter="url(#dropshadow)"/>
+      <ellipse cx="295" cy="560" rx="58" ry="40" fill="none" stroke="#3e3e3e" stroke-width="3"/>
+      <!-- cracks -->
+      <g stroke="#4a4a4a" stroke-width="1.5" opacity=".7"><line x1="250" y1="548" x2="232" y2="534"/><line x1="346" y1="549" x2="364" y2="536"/><line x1="274" y1="597" x2="264" y2="614"/><line x1="318" y1="598" x2="330" y2="613"/><line x1="240" y1="566" x2="222" y2="570"/><line x1="352" y1="565" x2="370" y2="567"/></g>
+      <!-- water puddle -->
+      <ellipse cx="295" cy="565" rx="38" ry="24" fill="url(#water)" opacity=".65"/>
+      <ellipse cx="287" cy="559" rx="18" ry="11" fill="#2a5a88" opacity=".35"/>
+      <!-- label -->
+      <rect x="262" y="608" width="66" height="19" rx="3" fill="#FF6B00" opacity=".92"/>
+      <text x="295" y="621" fill="#fff" font-size="9.5" font-family="Rajdhani,sans-serif" font-weight="700" text-anchor="middle" letter-spacing="1">POTHOLE</text>
+
+      <!-- ===== POTHOLE 2 — medium right ===== -->
+      <ellipse cx="548" cy="515" rx="40" ry="27" fill="url(#ph1)" filter="url(#dropshadow)"/>
+      <ellipse cx="548" cy="515" rx="40" ry="27" fill="none" stroke="#3e3e3e" stroke-width="2.5"/>
+      <g stroke="#4a4a4a" stroke-width="1.3" opacity=".6"><line x1="514" y1="504" x2="498" y2="494"/><line x1="584" y1="506" x2="600" y2="497"/><line x1="529" y1="540" x2="521" y2="553"/><line x1="568" y1="539" x2="577" y2="551"/></g>
+      <ellipse cx="548" cy="520" rx="26" ry="15" fill="url(#water)" opacity=".55"/>
+      <rect x="522" y="549" width="52" height="17" rx="3" fill="#FF6B00" opacity=".92"/>
+      <text x="548" y="561" fill="#fff" font-size="9" font-family="Rajdhani,sans-serif" font-weight="700" text-anchor="middle" letter-spacing="1">POTHOLE</text>
+
+      <!-- ===== POTHOLE 3 — small far right ===== -->
+      <ellipse cx="635" cy="600" rx="28" ry="18" fill="url(#ph1)" filter="url(#dropshadow)"/>
+      <ellipse cx="635" cy="600" rx="28" ry="18" fill="none" stroke="#3a3a3a" stroke-width="2"/>
+      <ellipse cx="635" cy="604" rx="16" ry="9" fill="url(#water)" opacity=".45"/>
+
+      <!-- GHMC Repair Truck -->
+      <g transform="translate(140,438)">
+        <rect x="0" y="0" width="75" height="42" rx="4" fill="#1a3a7a"/>
+        <rect x="46" y="-14" width="32" height="18" rx="3" fill="#1e4a90"/>
+        <rect x="48" y="-11" width="14" height="12" rx="2" fill="#6fa8d8" opacity=".7"/>
+        <rect x="64" y="-11" width="11" height="12" rx="2" fill="#6fa8d8" opacity=".65"/>
+        <rect x="4" y="7" width="38" height="22" rx="2" fill="#0e2860"/>
+        <text x="23" y="22" fill="#FF6B00" font-size="8" font-family="Rajdhani,sans-serif" font-weight="700" text-anchor="middle" letter-spacing="1">GHMC</text>
+        <rect x="0" y="27" width="75" height="5" fill="#FF6B00"/>
+        <circle cx="14" cy="42" r="9" fill="#1a1a1a"/><circle cx="14" cy="42" r="4" fill="#333"/>
+        <circle cx="56" cy="42" r="9" fill="#1a1a1a"/><circle cx="56" cy="42" r="4" fill="#333"/>
+        <rect x="50" y="-19" width="7" height="5" rx="2" fill="#FF6B00" opacity=".9" filter="url(#glow)"/>
+      </g>
+
+      <!-- Worker figure -->
+      <g transform="translate(382,444)">
+        <ellipse cx="0" cy="28" rx="12" ry="17" fill="#FF6B00"/>
+        <rect x="-12" y="22" width="24" height="4" fill="#ffe082" opacity=".8"/>
+        <rect x="-12" y="34" width="24" height="4" fill="#ffe082" opacity=".8"/>
+        <circle cx="0" cy="7" r="9" fill="#e8b48a"/>
+        <rect x="-11" y="-1" width="22" height="7" rx="3.5" fill="#FF6B00"/>
+        <rect x="-13" y="3" width="26" height="4" rx="2" fill="#c94800"/>
+        <line x1="-12" y1="21" x2="-22" y2="36" stroke="#FF6B00" stroke-width="5" stroke-linecap="round"/>
+        <line x1="12" y1="21" x2="22" y2="36" stroke="#FF6B00" stroke-width="5" stroke-linecap="round"/>
+        <line x1="22" y1="36" x2="20" y2="62" stroke="#777" stroke-width="3"/>
+        <ellipse cx="20" cy="64" rx="7" ry="4" fill="#555"/>
+        <line x1="-4" y1="45" x2="-6" y2="65" stroke="#222" stroke-width="5" stroke-linecap="round"/>
+        <line x1="4" y1="45" x2="6" y2="65" stroke="#222" stroke-width="5" stroke-linecap="round"/>
+      </g>
+
+      <!-- Warning cone 1 -->
+      <g transform="translate(236,538)"><polygon points="10,0 20,33 0,33" fill="#FF6B00"/><rect x="2" y="11" width="16" height="3" fill="#fff" opacity=".9"/><rect x="4" y="19" width="12" height="3" fill="#fff" opacity=".9"/><rect x="-3" y="33" width="26" height="4" rx="2" fill="#444"/></g>
+      <!-- Warning cone 2 -->
+      <g transform="translate(592,497)"><polygon points="10,0 20,33 0,33" fill="#FF6B00"/><rect x="2" y="11" width="16" height="3" fill="#fff" opacity=".9"/><rect x="4" y="19" width="12" height="3" fill="#fff" opacity=".9"/><rect x="-3" y="33" width="26" height="4" rx="2" fill="#444"/></g>
+
+      <!-- Road sign -->
+      <g transform="translate(644,382)">
+        <line x1="14" y1="0" x2="14" y2="58" stroke="#667" stroke-width="3"/>
+        <rect x="0" y="0" width="64" height="34" rx="4" fill="#FF6B00"/>
+        <text x="32" y="11" fill="#fff" font-size="7.5" font-family="Rajdhani,sans-serif" font-weight="700" text-anchor="middle" letter-spacing=".5">ROAD WORK</text>
+        <text x="32" y="21" fill="#fff" font-size="7.5" font-family="Rajdhani,sans-serif" font-weight="700" text-anchor="middle" letter-spacing=".5">AHEAD</text>
+        <text x="32" y="30" fill="#ffe082" font-size="6" font-family="Rajdhani,sans-serif" font-weight="600" text-anchor="middle">⚠ GHMC</text>
+      </g>
+
+      <!-- Gradient bottom fade to match panel -->
+      <rect x="0" y="400" width="800" height="300" fill="url(#skyG)" opacity=".2"/>
+    </svg>
+    <div class="login-left-content">
+      <h2>Join the <span>Pothole-Free</span><br>Hyderabad Mission</h2>
+      <p>Your report matters. Citizens like you have helped GHMC fix over 12,000 potholes across Hyderabad. Login today and be part of the change.</p>
+      <div class="login-mini-stats">
+        <div class="lms-item"><div class="n">12K+</div><div class="l">Fixed</div></div>
+        <div class="lms-item"><div class="n">48hr</div><div class="l">Avg Fix</div></div>
+        <div class="lms-item"><div class="n">3.2L</div><div class="l">Citizens</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="login-right">
+    <div class="login-card">
+      <div class="login-logo">
+        <div class="emb">🏛</div>
+        <h1>GHMC Citizen Portal</h1>
+        <p>Greater Hyderabad Municipal Corporation</p>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tabs">
+        <button class="tab active" id="tabLogin" onclick="switchTab('login')">Login</button>
+        <button class="tab" id="tabReg" onclick="switchTab('register')">Register</button>
+      </div>
+
+      <div class="login-err" id="loginErr"></div>
+
+      <!-- Login Form -->
+      <div class="form-body active" id="formLogin">
+        <div class="fg"><label>Mobile / Email</label><input type="text" id="loginId" placeholder="Enter mobile or email"></div>
+        <div class="fg"><label>Password</label><input type="password" id="loginPw" placeholder="Enter password">
+          <div class="forgot"><a onclick="showToastMsg('🔑','Reset Password','OTP sent to your registered mobile.')">Forgot password?</a></div>
+        </div>
+        <button class="btn-form" onclick="doLogin()">Login to Report</button>
+        <div class="or-divider">or continue with</div>
+        <button class="alt-btn" onclick="doAadhaarLogin()">📱 Login with Aadhaar OTP</button>
+        <button class="alt-btn" onclick="showToastMsg('🔒','DigiLocker','Redirecting to DigiLocker…')">🔒 Login with DigiLocker</button>
+        <div class="terms">By logging in, you agree to GHMC's <span>Terms of Service</span> and <span>Privacy Policy</span>.</div>
+      </div>
+
+      <!-- Register Form -->
+      <div class="form-body" id="formReg">
+        <div class="fg"><label>Full Name <span style="color:#ef4444;font-size:.85rem;">*</span></label><input type="text" id="regName" placeholder="Enter your full name"></div>
+        <div class="fg"><label>Mobile Number <span style="color:#ef4444;font-size:.85rem;">*</span></label><input type="tel" id="regMobile" placeholder="+91 XXXXX XXXXX"></div>
+        <div class="fg"><label>Email <span style="color:#ef4444;font-size:.85rem;">*</span></label><input type="email" id="regEmail" placeholder="your@email.com"></div>
+        <div class="fg">
+          <label>Ward / Area <span style="color:#ef4444;font-size:.85rem;">*</span></label>
+          <select id="regWard">
+            <option value="">Select your ward</option>
+            <option>Banjara Hills – Ward 1</option><option>Jubilee Hills – Ward 2</option>
+            <option>Madhapur – Ward 3</option><option>Kondapur – Ward 4</option>
+            <option>Gachibowli – Ward 5</option><option>Kukatpally – Ward 6</option>
+            <option>Ameerpet – Ward 7</option><option>Secunderabad – Ward 8</option>
+            <option>Begumpet – Ward 9</option><option>Charminar – Ward 10</option>
+            <option>LB Nagar – Ward 11</option><option>Dilsukhnagar – Ward 12</option>
+          </select>
+        </div>
+        <div class="fg"><label>Password <span style="color:#ef4444;font-size:.85rem;">*</span></label><input type="password" id="regPw" placeholder="Create a strong password"></div>
+        <button class="btn-form" onclick="doRegister()">Create Account & Login</button>
+        <div class="terms">By registering, you agree to GHMC's <span>Terms of Service</span> and <span>Privacy Policy</span>.</div>
+        <div style="font-size:.68rem;color:#556;margin-top:.5rem;"><span style="color:#ef4444;">*</span> Required fields</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     ③ DASHBOARD PAGE
+══════════════════════════════════════════════ -->
+<div class="page" id="page-dash">
+  <!-- sidebar -->
+  <nav class="sidebar">
+    <div class="sb-label">Navigation</div>
+    <div class="sb-item act" onclick="switchDash('report',this)"><span class="si">🏠</span> Dashboard</div>
+    <div class="sb-item" onclick="switchDash('myreports',this)"><span class="si">🚧</span> My Reports</div>
+    <div class="sb-item" onclick="switchDash('dsa',this)"><span class="si">📊</span> Report Engine</div>
+    <div class="sb-item" onclick="switchDash('map',this)"><span class="si">🗺️</span> Map View</div>
+    <div class="sb-item" onclick="switchDash('analytics',this)"><span class="si">📈</span> Analytics</div>
+    <div class="sb-label">Account</div>
+    <div class="sb-item" onclick="switchDash('profile',this)"><span class="si">👤</span> Profile</div>
+    <div class="sb-item" onclick="switchDash('notifications',this)"><span class="si">🔔</span> Notifications <span id="notifBadge" style="background:var(--red);color:white;font-size:.6rem;padding:.1rem .4rem;border-radius:10px;margin-left:auto;">3</span></div>
+    <div class="sb-footer">
+      <button class="sb-logout" onclick="doLogout()">← Logout</button>
+    </div>
+  </nav>
+
+  <!-- main -->
+  <main class="dash-main">
+
+    <!-- Summary cards -->
+    <div class="sum-row">
+      <div class="sum-card c1"><div class="sum-icon">📋</div><div class="sum-num" id="dTotal">0</div><div class="sum-lbl">Total Reports</div></div>
+      <div class="sum-card c2"><div class="sum-icon">⏳</div><div class="sum-num" id="dPending">0</div><div class="sum-lbl">Pending</div></div>
+      <div class="sum-card c3"><div class="sum-icon">✅</div><div class="sum-num" id="dResolved">0</div><div class="sum-lbl">Resolved</div></div>
+      <div class="sum-card c4"><div class="sum-icon">🚨</div><div class="sum-num" id="dCritical">0</div><div class="sum-lbl">Critical</div></div>
+    </div>
+
+    <!-- ── SECTION: Submit Report ── -->
+    <div class="dash-section active" id="sec-report">
+      <div>
+        <div class="dash-sec-head">
+          <div class="dash-sec-title">📸 Submit New Pothole Report</div>
+          <div class="pill">DSA-Powered Queue</div>
+        </div>
+        <div class="form-grid-2">
+          <!-- Form -->
+          <div class="report-form-box">
+            <div class="rf-group"><label>📍 Location / Area</label><input type="text" id="rLoc" placeholder="e.g. Banjara Hills Road No.12, near Tank Bund"></div>
+            <div class="rf-group"><label>📝 Description</label><textarea id="rDesc" placeholder="Describe the pothole — size, depth, hazard to vehicles…"></textarea></div>
+            <div class="rf-group">
+              <label>🚦 Severity Level</label>
+              <div class="sev-row">
+                <button class="sev-pill" onclick="setSev(this,'Low')">🟢 Low</button>
+                <button class="sev-pill" onclick="setSev(this,'Medium')">🟡 Medium</button>
+                <button class="sev-pill" onclick="setSev(this,'High')">🔴 High</button>
+                <button class="sev-pill" onclick="setSev(this,'Critical')">🔥 Critical</button>
+              </div>
+            </div>
+            <div class="rf-group">
+              <label>📷 Upload Photos (max 5)</label>
+              <div class="upload-zone" id="uploadZone" onclick="document.getElementById('photoFile').click()">
+                <div class="uz-icon">📷</div>
+                <div class="uz-txt">Drag & drop or <em>click to upload</em> (JPG, PNG)</div>
+                <input type="file" id="photoFile" accept="image/*" multiple onchange="handlePhotos(this)">
+              </div>
+              <div class="preview-strip" id="previewStrip"></div>
+            </div>
+            <div class="rf-group"><label>📞 Contact (optional)</label><input type="tel" id="rContact" placeholder="+91 XXXXX XXXXX"></div>
+            <div class="sub-row">
+              <button class="btn-sub" onclick="submitReport()">🚨 Submit Report</button>
+              <button class="btn-clr" onclick="clearReportForm()">✕ Clear</button>
+            </div>
+          </div>
+          <!-- DSA Live Panel -->
+          <div class="dsa-panel">
+            <div class="dsa-title">📊 Live Report Tracker</div>
+            <div class="dsa-block">
+              <h4>🚨 Urgent Repairs Queue — Highest Severity First</h4>
+              <div id="pqView"><div class="empty-s">Submit a report to see the queue…</div></div>
+            </div>
+            <div class="dsa-block">
+              <h4>🔍 Report Search Index — Instant Lookup by ID</h4>
+              <div id="hmView"><div class="empty-s">No entries yet…</div></div>
+            </div>
+            <div class="dsa-block">
+              <h4>📋 Recent Activity Feed — Latest Actions First</h4>
+              <div id="llView"><div class="empty-s">No activity yet…</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SECTION: My Reports ── -->
+    <div class="dash-section" id="sec-myreports">
+      <div class="dash-sec-head">
+        <div class="dash-sec-title">🚧 My Reports</div>
+        <div class="pill" id="reportCountPill">0 reports</div>
+      </div>
+      <div style="background:var(--card);border:1px solid rgba(255,255,255,.07);border-radius:10px;overflow:hidden;">
+        <table class="reports-table" id="myTable">
+          <thead><tr><th>Report ID</th><th>Location</th><th>Severity</th><th>Photos</th><th>Status</th><th>Submitted</th><th>Action</th></tr></thead>
+          <tbody id="myTableBody"><tr><td colspan="7" style="text-align:center;color:#334;padding:2.5rem;">No reports yet. Submit your first report!</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── SECTION: DSA Engine full view ── -->
+    <div class="dash-section" id="sec-dsa">
+      <div class="dash-sec-head">
+        <div class="dash-sec-title">📊 Report Management Engine — Full View</div>
+        <div class="pill">4 Data Structures</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;">
+        <div class="dsa-panel">
+          <div class="dsa-title">🚨 Urgent Repairs Queue</div>
+          <div style="font-size:.75rem;color:#556;margin-bottom:.7rem;">Critical → High → Medium → Low | New reports auto-sorted by danger level</div>
+          <div id="pqViewFull"><div class="empty-s">No data.</div></div>
+        </div>
+        <div class="dsa-panel">
+          <div class="dsa-title">🔍 Report Search Index</div>
+          <div style="font-size:.75rem;color:#556;margin-bottom:.7rem;">Instant lookup by Report ID | Track status & ward | Always up-to-date</div>
+          <div id="hmViewFull"><div class="empty-s">No data.</div></div>
+        </div>
+        <div class="dsa-panel">
+          <div class="dsa-title">📋 Recent Activity Feed</div>
+          <div style="font-size:.75rem;color:#556;margin-bottom:.7rem;">Latest actions shown first | Submissions, assignments & resolutions</div>
+          <div id="llViewFull"><div class="empty-s">No data.</div></div>
+        </div>
+        <div class="dsa-panel">
+          <div class="dsa-title">🗺️ Ward Inspector Network</div>
+          <div style="font-size:.75rem;color:#556;margin-bottom:.7rem;">Finds nearest available inspector for each ward automatically</div>
+          <div id="graphView">
+            <div class="dsa-block" style="margin-bottom:.5rem;">
+              <div style="font-size:.8rem;color:#aab;margin-bottom:.5rem;">Hyderabad Ward Network (12 wards, 15 edges)</div>
+              <div id="graphNodes"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ── SECTION: Map View ── -->
+    <div class="dash-section" id="sec-map">
+      <div class="dash-sec-head">
+        <div class="dash-sec-title">🗺️ Ward Map — Hyderabad</div>
+        <div class="pill">Live Pothole Locations</div>
+      </div>
+      <div style="background:var(--card);border:1px solid rgba(255,255,255,.07);border-radius:10px;overflow:hidden;">
+        <div style="padding:.8rem 1.2rem;border-bottom:1px solid rgba(255,255,255,.06);display:flex;gap:.8rem;align-items:center;flex-wrap:wrap;">
+          <span style="font-size:.8rem;color:#aab;">📍 Showing Hyderabad ward boundaries & reported potholes</span>
+          <span style="margin-left:auto;display:flex;gap:.5rem;">
+            <span style="background:rgba(239,68,68,.2);border:1px solid var(--red);color:#f87;font-size:.7rem;padding:.2rem .6rem;border-radius:3px;">🔴 Critical</span>
+            <span style="background:rgba(255,107,0,.2);border:1px solid var(--saffron);color:var(--saffron);font-size:.7rem;padding:.2rem .6rem;border-radius:3px;">🟠 High</span>
+            <span style="background:rgba(234,179,8,.2);border:1px solid var(--yellow);color:var(--yellow);font-size:.7rem;padding:.2rem .6rem;border-radius:3px;">🟡 Medium</span>
+            <span style="background:rgba(34,197,94,.2);border:1px solid var(--green);color:var(--green);font-size:.7rem;padding:.2rem .6rem;border-radius:3px;">🟢 Low</span>
+          </span>
+        </div>
+        <iframe
+          id="gmap"
+          src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d121940.73661555444!2d78.45636!3d17.38405!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1sen!2sin!4v1700000000000!5m2!1sen!2sin"
+          width="100%" height="520" style="border:0;display:block;" allowfullscreen="" loading="lazy"
+          referrerpolicy="no-referrer-when-downgrade">
+        </iframe>
+        <div style="padding:.8rem 1.2rem;border-top:1px solid rgba(255,255,255,.06);display:flex;gap:1.5rem;">
+          <div style="font-size:.78rem;color:#667;">📌 <strong style="color:var(--gold);" id="mapReportCount">0</strong> reports plotted across Hyderabad wards</div>
+          <div style="font-size:.78rem;color:#667;">🏙 Coverage: <strong style="color:var(--gold);">12 Wards</strong></div>
+          <div style="font-size:.78rem;color:#667;">🔄 Updates in real-time as reports are filed</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SECTION: Analytics ── -->
+    <div class="dash-section" id="sec-analytics">
+      <div class="dash-sec-head">
+        <div class="dash-sec-title">📈 Analytics Dashboard</div>
+        <div class="pill" id="analyticsDatePill">Live Data</div>
+      </div>
+      <!-- KPI Row -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;">
+        <div style="background:var(--card);border:1px solid rgba(255,107,0,.2);border-radius:8px;padding:1.2rem;text-align:center;">
+          <div style="font-size:1.8rem;font-weight:700;font-family:'Rajdhani',sans-serif;color:var(--saffron);" id="aTotal">0</div>
+          <div style="font-size:.7rem;color:#667;text-transform:uppercase;letter-spacing:1px;margin-top:.2rem;">Total Reports</div>
+          <div style="font-size:.72rem;color:var(--green);margin-top:.4rem;" id="aResRate">0% resolved</div>
+        </div>
+        <div style="background:var(--card);border:1px solid rgba(234,179,8,.2);border-radius:8px;padding:1.2rem;text-align:center;">
+          <div style="font-size:1.8rem;font-weight:700;font-family:'Rajdhani',sans-serif;color:var(--yellow);" id="aPending">0</div>
+          <div style="font-size:.7rem;color:#667;text-transform:uppercase;letter-spacing:1px;margin-top:.2rem;">Pending Repairs</div>
+          <div style="font-size:.72rem;color:var(--yellow);margin-top:.4rem;">Awaiting crew assignment</div>
+        </div>
+        <div style="background:var(--card);border:1px solid rgba(34,197,94,.2);border-radius:8px;padding:1.2rem;text-align:center;">
+          <div style="font-size:1.8rem;font-weight:700;font-family:'Rajdhani',sans-serif;color:var(--green);" id="aResolved">0</div>
+          <div style="font-size:.7rem;color:#667;text-transform:uppercase;letter-spacing:1px;margin-top:.2rem;">Resolved</div>
+          <div style="font-size:.72rem;color:var(--green);margin-top:.4rem;">Roads restored ✅</div>
+        </div>
+        <div style="background:var(--card);border:1px solid rgba(239,68,68,.2);border-radius:8px;padding:1.2rem;text-align:center;">
+          <div style="font-size:1.8rem;font-weight:700;font-family:'Rajdhani',sans-serif;color:var(--red);" id="aCritical">0</div>
+          <div style="font-size:.7rem;color:#667;text-transform:uppercase;letter-spacing:1px;margin-top:.2rem;">Critical Reports</div>
+          <div style="font-size:.72rem;color:var(--red);margin-top:.4rem;">Immediate action needed</div>
+        </div>
+      </div>
+      <!-- Charts Row -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;">
+        <!-- Severity Breakdown -->
+        <div style="background:var(--card);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:1.4rem;">
+          <div style="font-family:'Rajdhani',sans-serif;font-size:1rem;font-weight:700;color:var(--gold);margin-bottom:1rem;">🚦 Reports by Severity</div>
+          <div id="sevChart" style="display:flex;flex-direction:column;gap:.7rem;">
+            <div style="text-align:center;color:#334;padding:1.5rem;font-size:.82rem;">Submit reports to see severity breakdown</div>
+          </div>
+        </div>
+        <!-- Ward Breakdown -->
+        <div style="background:var(--card);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:1.4rem;">
+          <div style="font-family:'Rajdhani',sans-serif;font-size:1rem;font-weight:700;color:var(--gold);margin-bottom:1rem;">🏙️ Reports by Ward</div>
+          <div id="wardChart" style="display:flex;flex-direction:column;gap:.6rem;">
+            <div style="text-align:center;color:#334;padding:1.5rem;font-size:.82rem;">Submit reports to see ward breakdown</div>
+          </div>
+        </div>
+      </div>
+      <!-- Resolution Timeline -->
+      <div style="background:var(--card);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:1.4rem;">
+        <div style="font-family:'Rajdhani',sans-serif;font-size:1rem;font-weight:700;color:var(--gold);margin-bottom:1rem;">📅 Submission Timeline</div>
+        <div id="timelineChart" style="display:flex;align-items:flex-end;gap:6px;height:100px;padding:.5rem 0;">
+          <div style="text-align:center;color:#334;padding:1.5rem;font-size:.82rem;width:100%;">No timeline data yet — submit reports to track activity</div>
+        </div>
+        <div style="display:flex;gap:1.5rem;margin-top:.8rem;font-size:.72rem;color:#556;">
+          <span><span style="color:var(--saffron);">■</span> Submitted</span>
+          <span><span style="color:var(--green);">■</span> Resolved</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SECTION: Profile ── -->
+    <div class="dash-section" id="sec-profile">
+      <div class="dash-sec-head">
+        <div class="dash-sec-title">👤 My Profile</div>
+        <div class="pill">Citizen Account</div>
+      </div>
+
+      <!-- ROW 1: Avatar card + Edit form -->
+      <div style="display:grid;grid-template-columns:300px 1fr;gap:1.2rem;align-items:start;">
+
+        <!-- LEFT: Avatar + Stats + Badges -->
+        <div style="display:flex;flex-direction:column;gap:1rem;">
+
+          <!-- Avatar card -->
+          <div style="background:var(--card);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:1.8rem;text-align:center;">
+            <div style="position:relative;display:inline-block;margin-bottom:1rem;">
+              <div style="width:88px;height:88px;border-radius:50%;background:linear-gradient(135deg,var(--saffron),var(--gold));display:flex;align-items:center;justify-content:center;font-size:2.2rem;margin:0 auto;box-shadow:0 0 0 4px rgba(255,107,0,.2),0 0 24px rgba(255,107,0,.3);">👤</div>
+              <div style="position:absolute;bottom:2px;right:2px;width:20px;height:20px;border-radius:50%;background:var(--green);border:2px solid var(--card);display:flex;align-items:center;justify-content:center;font-size:.55rem;color:white;font-weight:700;">●</div>
+            </div>
+            <div style="font-family:'Rajdhani',sans-serif;font-size:1.3rem;font-weight:700;color:white;" id="profileName">—</div>
+            <div style="font-size:.75rem;color:#556;margin-top:.2rem;" id="profileWard">—</div>
+            <div style="font-size:.7rem;color:#445;margin-top:.3rem;" id="profileEmail">—</div>
+            <div style="margin-top:.6rem;">
+              <span id="profileBadgeLevel" style="background:linear-gradient(90deg,var(--saffron),var(--gold));color:white;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.78rem;padding:.28rem .75rem;border-radius:20px;display:inline-block;letter-spacing:1px;">🏅 Active Citizen</span>
+            </div>
+          </div>
+
+          <!-- Stats card -->
+          <div style="background:var(--card);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:1.2rem;">
+            <div style="font-family:'Rajdhani',sans-serif;font-size:.85rem;font-weight:700;color:var(--gold);margin-bottom:.9rem;letter-spacing:.5px;">📊 My Activity</div>
+            <div style="display:flex;flex-direction:column;gap:.55rem;">
+              <div style="display:flex;justify-content:space-between;align-items:center;font-size:.8rem;">
+                <span style="color:#778;">📋 Total Reports</span>
+                <span style="color:var(--gold);font-weight:700;font-family:'Rajdhani',sans-serif;font-size:1rem;" id="profileTotalR">0</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;font-size:.8rem;">
+                <span style="color:#778;">✅ Resolved</span>
+                <span style="color:var(--green);font-weight:700;font-family:'Rajdhani',sans-serif;font-size:1rem;" id="profileResolvedR">0</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;font-size:.8rem;">
+                <span style="color:#778;">⏳ Pending</span>
+                <span style="color:var(--yellow);font-weight:700;font-family:'Rajdhani',sans-serif;font-size:1rem;" id="profilePendingR">0</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;font-size:.8rem;">
+                <span style="color:#778;">🚨 Critical Filed</span>
+                <span style="color:var(--red);font-weight:700;font-family:'Rajdhani',sans-serif;font-size:1rem;" id="profileCriticalR">0</span>
+              </div>
+              <div style="height:1px;background:rgba(255,255,255,.06);margin:.2rem 0;"></div>
+              <div style="display:flex;justify-content:space-between;align-items:center;font-size:.8rem;">
+                <span style="color:#778;">🎯 Resolution Rate</span>
+                <span style="color:var(--saffron);font-weight:700;font-family:'Rajdhani',sans-serif;font-size:1rem;" id="profileRateR">0%</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;font-size:.8rem;">
+                <span style="color:#778;">📅 Member Since</span>
+                <span style="color:#aab;">2025</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;font-size:.8rem;">
+                <span style="color:#778;">🏙️ Ward</span>
+                <span style="color:#aab;font-size:.72rem;text-align:right;max-width:130px;" id="profileWardStat">—</span>
+              </div>
+            </div>
+            <!-- Contribution bar -->
+            <div style="margin-top:.9rem;padding-top:.9rem;border-top:1px solid rgba(255,255,255,.06);">
+              <div style="display:flex;justify-content:space-between;font-size:.7rem;color:#556;margin-bottom:.4rem;">
+                <span>Contribution Score</span>
+                <span id="profileScore" style="color:var(--gold);">0 pts</span>
+              </div>
+              <div style="height:7px;background:rgba(255,255,255,.06);border-radius:4px;overflow:hidden;">
+                <div id="profileScoreBar" style="height:100%;width:0%;background:linear-gradient(90deg,var(--saffron),var(--gold));border-radius:4px;transition:width .6s ease;"></div>
+              </div>
+              <div style="font-size:.65rem;color:#334;margin-top:.3rem;text-align:right;">Next level at <span id="profileNextLevel">50</span> pts</div>
+            </div>
+          </div>
+
+          <!-- Badges -->
+          <div style="background:var(--card);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:1.2rem;">
+            <div style="font-family:'Rajdhani',sans-serif;font-size:.85rem;font-weight:700;color:var(--gold);margin-bottom:.8rem;letter-spacing:.5px;">🏆 Badges Earned</div>
+            <div id="profileBadges" style="display:flex;flex-wrap:wrap;gap:.5rem;">
+              <div style="background:rgba(255,107,0,.12);border:1px solid rgba(255,107,0,.25);border-radius:20px;padding:.25rem .7rem;font-size:.7rem;color:var(--saffron);">🌟 Registered Citizen</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT: Edit form + Password + Preferences -->
+        <div style="display:flex;flex-direction:column;gap:1rem;">
+
+          <!-- Edit form -->
+          <div style="background:var(--card);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:1.6rem;">
+            <div style="font-family:'Rajdhani',sans-serif;font-size:1rem;font-weight:700;color:var(--gold);margin-bottom:1.2rem;">✏️ Edit Profile</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+              <div class="fg"><label>Full Name</label><input type="text" id="pName" placeholder="Your full name"></div>
+              <div class="fg"><label>Mobile Number</label><input type="tel" id="pMobile" placeholder="+91 XXXXX XXXXX"></div>
+              <div class="fg"><label>Email Address</label><input type="email" id="pEmail" placeholder="your@email.com"></div>
+              <div class="fg"><label>Ward / Area</label>
+                <select id="pWard" style="width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:4px;padding:.68rem .9rem;color:white;font-size:.9rem;outline:none;">
+                  <option value="">Select ward</option>
+                  <option>Banjara Hills – Ward 1</option><option>Jubilee Hills – Ward 2</option>
+                  <option>Madhapur – Ward 3</option><option>Kondapur – Ward 4</option>
+                  <option>Gachibowli – Ward 5</option><option>Kukatpally – Ward 6</option>
+                  <option>Ameerpet – Ward 7</option><option>Secunderabad – Ward 8</option>
+                  <option>Begumpet – Ward 9</option><option>Charminar – Ward 10</option>
+                  <option>LB Nagar – Ward 11</option><option>Dilsukhnagar – Ward 12</option>
+                </select>
+              </div>
+            </div>
+            <div style="margin-top:1rem;">
+              <div class="fg"><label>Bio / Note (optional)</label><textarea style="width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:4px;padding:.68rem .9rem;color:white;font-size:.9rem;outline:none;resize:vertical;min-height:64px;" id="pBio" placeholder="Tell us about your neighbourhood…"></textarea></div>
+            </div>
+            <div style="display:flex;gap:.8rem;align-items:center;">
+              <button class="btn-form" style="width:auto;padding:.7rem 2rem;" onclick="saveProfile()">💾 Save Changes</button>
+              <div id="profileSaveMsg" style="font-size:.8rem;color:var(--green);display:none;">✅ Profile saved!</div>
+            </div>
+          </div>
+
+          <!-- Recent Reports -->
+          <div style="background:var(--card);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:1.4rem;">
+            <div style="font-family:'Rajdhani',sans-serif;font-size:.9rem;font-weight:700;color:var(--gold);margin-bottom:.8rem;">🚧 My Recent Reports</div>
+            <div id="profileRecentReports"><div style="text-align:center;color:#334;padding:1rem;font-size:.82rem;">No reports yet — submit your first report!</div></div>
+          </div>
+
+          <!-- Notification Preferences -->
+          <div style="background:var(--card);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:1.4rem;">
+            <div style="font-family:'Rajdhani',sans-serif;font-size:.9rem;font-weight:700;color:var(--gold);margin-bottom:.9rem;">🔔 Notification Preferences</div>
+            <div style="display:flex;flex-direction:column;gap:.7rem;">
+              <label style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;">
+                <span style="font-size:.82rem;color:#aab;">📋 Report status updates</span>
+                <input type="checkbox" id="notifStatus" checked style="accent-color:var(--saffron);width:16px;height:16px;">
+              </label>
+              <label style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;">
+                <span style="font-size:.82rem;color:#aab;">🔧 Inspector assignment alerts</span>
+                <input type="checkbox" id="notifAssign" checked style="accent-color:var(--saffron);width:16px;height:16px;">
+              </label>
+              <label style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;">
+                <span style="font-size:.82rem;color:#aab;">✅ Resolution confirmations</span>
+                <input type="checkbox" id="notifResolve" checked style="accent-color:var(--saffron);width:16px;height:16px;">
+              </label>
+              <label style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;">
+                <span style="font-size:.82rem;color:#aab;">📢 GHMC announcements & drives</span>
+                <input type="checkbox" id="notifAnnounce" checked style="accent-color:var(--saffron);width:16px;height:16px;">
+              </label>
+              <label style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;">
+                <span style="font-size:.82rem;color:#aab;">📊 Weekly summary digest</span>
+                <input type="checkbox" id="notifWeekly" style="accent-color:var(--saffron);width:16px;height:16px;">
+              </label>
+            </div>
+          </div>
+
+          <!-- Change Password -->
+          <div style="background:var(--card);border:1px solid rgba(239,68,68,.15);border-radius:10px;padding:1.4rem;">
+            <div style="font-family:'Rajdhani',sans-serif;font-size:.9rem;font-weight:700;color:#f87;margin-bottom:.8rem;">🔒 Change Password</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.8rem;">
+              <div class="fg"><label>Current Password</label><input type="password" id="pOldPw" placeholder="Current"></div>
+              <div class="fg"><label>New Password</label><input type="password" id="pNewPw" placeholder="New password"></div>
+              <div class="fg"><label>Confirm New</label><input type="password" id="pConfPw" placeholder="Confirm"></div>
+            </div>
+            <button onclick="changePassword()" style="background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);color:#f87;padding:.55rem 1.2rem;border-radius:4px;font-family:'Rajdhani',sans-serif;font-size:.88rem;font-weight:600;cursor:pointer;transition:all .2s;">Update Password</button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SECTION: Notifications ── -->
+    <div class="dash-section" id="sec-notifications">
+      <div class="dash-sec-head">
+        <div class="dash-sec-title">🔔 Notifications</div>
+        <div style="display:flex;gap:.6rem;align-items:center;">
+          <div class="pill" id="unreadCount">3 unread</div>
+          <button onclick="markAllRead()" style="background:rgba(255,107,0,.1);border:1px solid rgba(255,107,0,.3);color:var(--saffron);padding:.3rem .8rem;border-radius:4px;font-size:.75rem;cursor:pointer;font-family:'Rajdhani',sans-serif;font-weight:600;">✓ Mark All Read</button>
+        </div>
+      </div>
+      <div style="background:var(--card);border:1px solid rgba(255,255,255,.07);border-radius:10px;overflow:hidden;" id="notifList">
+        <!-- Notifications rendered by JS -->
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     MODALS — Track Report / Statistics / Contact
+══════════════════════════════════════════════ -->
+
+<!-- Overlay backdrop -->
+<div id="modalBackdrop" onclick="closeAllModals()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:300;backdrop-filter:blur(4px);"></div>
+
+<!-- ① TRACK REPORT MODAL -->
+<div id="modalTrack" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:301;width:min(560px,94vw);background:#1E2D45;border:1px solid rgba(255,107,0,.3);border-radius:12px;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.6);">
+  <div style="background:linear-gradient(135deg,rgba(255,107,0,.15),transparent);padding:1.4rem 1.6rem;border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:center;justify-content:space-between;">
+    <div>
+      <div style="font-family:'Rajdhani',sans-serif;font-size:1.3rem;font-weight:700;color:white;">📍 Track Your Report</div>
+      <div style="font-size:.75rem;color:#667;margin-top:.2rem;">Enter your Report ID to check live status</div>
+    </div>
+    <button onclick="closeAllModals()" style="background:rgba(255,255,255,.07);border:none;color:#aab;width:32px;height:32px;border-radius:50%;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
+  </div>
+  <div style="padding:1.6rem;">
+    <div style="display:flex;gap:.6rem;margin-bottom:1.2rem;">
+      <input id="trackInput" type="text" placeholder="e.g. RPT-1001" style="flex:1;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:5px;padding:.7rem 1rem;color:white;font-size:.9rem;outline:none;" oninput="this.style.borderColor='rgba(255,107,0,.5)'" onkeydown="if(event.key==='Enter')trackReport()">
+      <button onclick="trackReport()" style="background:var(--saffron);color:white;border:none;padding:.7rem 1.4rem;border-radius:5px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.95rem;cursor:pointer;letter-spacing:.5px;">Search</button>
+    </div>
+    <div id="trackResult" style="min-height:80px;"></div>
+    <!-- Recent Reports shortcut (when logged in) -->
+    <div id="trackMyList" style="margin-top:1rem;border-top:1px solid rgba(255,255,255,.06);padding-top:1rem;display:none;">
+      <div style="font-size:.72rem;color:#556;letter-spacing:1px;text-transform:uppercase;margin-bottom:.6rem;">Your Recent Reports</div>
+      <div id="trackMyItems"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ② STATISTICS MODAL -->
+<div id="modalStats" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:301;width:min(680px,96vw);background:#1E2D45;border:1px solid rgba(255,107,0,.3);border-radius:12px;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.6);">
+  <div style="background:linear-gradient(135deg,rgba(255,107,0,.15),transparent);padding:1.4rem 1.6rem;border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:center;justify-content:space-between;">
+    <div>
+      <div style="font-family:'Rajdhani',sans-serif;font-size:1.3rem;font-weight:700;color:white;">📊 GHMC City Statistics</div>
+      <div style="font-size:.75rem;color:#667;margin-top:.2rem;">Live pothole repair data across Hyderabad</div>
+    </div>
+    <button onclick="closeAllModals()" style="background:rgba(255,255,255,.07);border:none;color:#aab;width:32px;height:32px;border-radius:50%;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
+  </div>
+  <div style="padding:1.6rem;display:flex;flex-direction:column;gap:1.2rem;max-height:80vh;overflow-y:auto;">
+    <!-- KPI grid -->
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.8rem;">
+      <div style="background:rgba(255,107,0,.1);border:1px solid rgba(255,107,0,.25);border-radius:8px;padding:1rem;text-align:center;">
+        <div style="font-family:'Rajdhani',sans-serif;font-size:2rem;font-weight:700;color:var(--saffron);" id="st-total">0</div>
+        <div style="font-size:.68rem;color:#667;text-transform:uppercase;letter-spacing:1px;margin-top:.2rem;">Total Reports Filed</div>
+        <div style="font-size:.7rem;color:#667;margin-top:.3rem;" id="st-total-sub">No reports yet</div>
+      </div>
+      <div style="background:rgba(234,179,8,.08);border:1px solid rgba(234,179,8,.2);border-radius:8px;padding:1rem;text-align:center;">
+        <div style="font-family:'Rajdhani',sans-serif;font-size:2rem;font-weight:700;color:var(--yellow);" id="st-pending">0</div>
+        <div style="font-size:.68rem;color:#667;text-transform:uppercase;letter-spacing:1px;margin-top:.2rem;">Pending Repairs</div>
+        <div style="font-size:.7rem;color:#667;margin-top:.3rem;" id="st-pending-sub">Awaiting assignment</div>
+      </div>
+      <div style="background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.2);border-radius:8px;padding:1rem;text-align:center;">
+        <div style="font-family:'Rajdhani',sans-serif;font-size:2rem;font-weight:700;color:var(--green);" id="st-rate">0%</div>
+        <div style="font-size:.68rem;color:#667;text-transform:uppercase;letter-spacing:1px;margin-top:.2rem;">Resolution Rate</div>
+        <div style="font-size:.7rem;color:#667;margin-top:.3rem;" id="st-rate-sub">Based on your reports</div>
+      </div>
+    </div>
+    <!-- Top wards -->
+    <div style="background:rgba(255,255,255,.03);border-radius:8px;padding:1rem;">
+      <div style="font-family:'Rajdhani',sans-serif;font-size:.88rem;font-weight:700;color:var(--gold);margin-bottom:.8rem;">🏆 Reports by Ward</div>
+      <div id="st-wards"><div style="text-align:center;color:#334;padding:1rem;font-size:.82rem;">Submit reports to see ward breakdown</div></div>
+    </div>
+    <!-- Active complaints + weekly progress -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem;">
+      <div style="background:rgba(255,255,255,.03);border-radius:8px;padding:1rem;">
+        <div style="font-family:'Rajdhani',sans-serif;font-size:.88rem;font-weight:700;color:var(--gold);margin-bottom:.6rem;">🚨 Reports by Severity</div>
+        <div id="st-severity"><div style="text-align:center;color:#334;padding:.5rem;font-size:.8rem;">No data yet</div></div>
+      </div>
+      <div style="background:rgba(255,255,255,.03);border-radius:8px;padding:1rem;">
+        <div style="font-family:'Rajdhani',sans-serif;font-size:.88rem;font-weight:700;color:var(--gold);margin-bottom:.6rem;">📋 Report Status Summary</div>
+        <div id="st-status"><div style="text-align:center;color:#334;padding:.5rem;font-size:.8rem;">No data yet</div></div>
+      </div>
+    </div>
+    <div style="text-align:center;font-size:.7rem;color:#334;" id="st-footer">Data from your active session · Submit reports to see live stats</div>
+  </div>
+</div>
+
+<!-- ③ CONTACT MODAL -->
+<div id="modalContact" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:301;width:min(580px,94vw);background:#1E2D45;border:1px solid rgba(255,107,0,.3);border-radius:12px;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.6);">
+  <div style="background:linear-gradient(135deg,rgba(255,107,0,.15),transparent);padding:1.4rem 1.6rem;border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:center;justify-content:space-between;">
+    <div>
+      <div style="font-family:'Rajdhani',sans-serif;font-size:1.3rem;font-weight:700;color:white;">📞 Contact GHMC</div>
+      <div style="font-size:.75rem;color:#667;margin-top:.2rem;">Get help or send us a message</div>
+    </div>
+    <button onclick="closeAllModals()" style="background:rgba(255,255,255,.07);border:none;color:#aab;width:32px;height:32px;border-radius:50%;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
+  </div>
+  <div style="padding:1.6rem;display:flex;flex-direction:column;gap:1rem;">
+    <!-- Contact cards -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem;">
+      <div style="background:rgba(255,107,0,.08);border:1px solid rgba(255,107,0,.2);border-radius:8px;padding:1rem;display:flex;align-items:center;gap:.8rem;">
+        <div style="font-size:1.6rem;">📞</div>
+        <div><div style="font-size:.7rem;color:#667;text-transform:uppercase;letter-spacing:1px;">Helpline (24/7)</div><div style="font-family:'Rajdhani',sans-serif;font-size:1.1rem;font-weight:700;color:var(--saffron);">1800-425-0425</div><div style="font-size:.7rem;color:#445;margin-top:.1rem;">Toll Free</div></div>
+      </div>
+      <div style="background:rgba(255,179,0,.06);border:1px solid rgba(255,179,0,.18);border-radius:8px;padding:1rem;display:flex;align-items:center;gap:.8rem;">
+        <div style="font-size:1.6rem;">📧</div>
+        <div><div style="font-size:.7rem;color:#667;text-transform:uppercase;letter-spacing:1px;">Email Us</div><div style="font-family:'Rajdhani',sans-serif;font-size:.95rem;font-weight:700;color:var(--gold);">potholes@ghmc.gov.in</div><div style="font-size:.7rem;color:#445;margin-top:.1rem;">Reply within 24 hrs</div></div>
+      </div>
+      <div style="background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.18);border-radius:8px;padding:1rem;display:flex;align-items:center;gap:.8rem;">
+        <div style="font-size:1.6rem;">🏢</div>
+        <div><div style="font-size:.7rem;color:#667;text-transform:uppercase;letter-spacing:1px;">Head Office</div><div style="font-size:.82rem;color:var(--light);">Tank Bund Rd, Hyderabad</div><div style="font-size:.7rem;color:#445;margin-top:.1rem;">Mon–Sat, 9AM–6PM</div></div>
+      </div>
+      <div style="background:rgba(100,149,237,.06);border:1px solid rgba(100,149,237,.18);border-radius:8px;padding:1rem;display:flex;align-items:center;gap:.8rem;">
+        <div style="font-size:1.6rem;">📱</div>
+        <div><div style="font-size:.7rem;color:#667;text-transform:uppercase;letter-spacing:1px;">WhatsApp</div><div style="font-family:'Rajdhani',sans-serif;font-size:1rem;font-weight:700;color:#6fa8dc;">+91 98765 43210</div><div style="font-size:.7rem;color:#445;margin-top:.1rem;">Quick query support</div></div>
+      </div>
+    </div>
+    <!-- Message form -->
+    <div style="background:rgba(255,255,255,.03);border-radius:8px;padding:1.1rem;">
+      <div style="font-family:'Rajdhani',sans-serif;font-size:.9rem;font-weight:700;color:var(--gold);margin-bottom:.8rem;">✉️ Send Us a Message</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.7rem;margin-bottom:.7rem;">
+        <div class="fg" style="margin:0;"><label style="font-size:.68rem;">Your Name</label><input type="text" id="cName" placeholder="Full name" style="width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:4px;padding:.6rem .8rem;color:white;font-size:.85rem;outline:none;"></div>
+        <div class="fg" style="margin:0;"><label style="font-size:.68rem;">Mobile / Email</label><input type="text" id="cContact" placeholder="Contact details" style="width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:4px;padding:.6rem .8rem;color:white;font-size:.85rem;outline:none;"></div>
+      </div>
+      <div class="fg" style="margin-bottom:.7rem;"><label style="font-size:.68rem;">Subject</label>
+        <select id="cSubject" style="width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:4px;padding:.6rem .8rem;color:white;font-size:.85rem;outline:none;">
+          <option value="">Select a topic</option>
+          <option>Pothole Report Complaint</option>
+          <option>Report Status Enquiry</option>
+          <option>Inspector Not Responding</option>
+          <option>Road Damage (Non-Pothole)</option>
+          <option>App Technical Issue</option>
+          <option>General Feedback</option>
+        </select>
+      </div>
+      <div class="fg" style="margin-bottom:.8rem;"><label style="font-size:.68rem;">Message</label><textarea id="cMsg" rows="3" placeholder="Describe your issue or feedback…" style="width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:4px;padding:.6rem .8rem;color:white;font-size:.85rem;outline:none;resize:vertical;"></textarea></div>
+      <div style="display:flex;align-items:center;gap:.8rem;">
+        <button onclick="sendContactMsg()" style="background:var(--saffron);color:white;border:none;padding:.65rem 1.8rem;border-radius:4px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.95rem;cursor:pointer;letter-spacing:.5px;">Send Message →</button>
+        <div id="contactSentMsg" style="font-size:.8rem;color:var(--green);display:none;">✅ Message sent! We'll reply within 24 hours.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="globalToast">
+  <div class="toast-icon" id="tIcon">✅</div>
+  <div><strong id="tTitle"></strong><span id="tBody"></span></div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     JAVASCRIPT — DSA + App Logic
+══════════════════════════════════════════════ -->
+<script>
+/* ═══════════════════════════════════════
+   APP STATE
+═══════════════════════════════════════ */
+let currentUser = null;
+let selectedSev = '';
+let uploadedPhotos = [];
+let reportCounter = 1000;
+let stats = {total:0, pending:0, resolved:0, critical:0};
+
+/* ═══════════════════════════════════════
+   DSA: MAX-HEAP PRIORITY QUEUE
+═══════════════════════════════════════ */
+const SEV_W = {Critical:4,High:3,Medium:2,Low:1};
+class PriorityQueue {
+  constructor(){ this.heap=[]; }
+  _w(i){ return SEV_W[this.heap[i].severity]||0; }
+  _swap(a,b){ [this.heap[a],this.heap[b]]=[this.heap[b],this.heap[a]]; }
+  _up(i){ while(i>0){ const p=Math.floor((i-1)/2); if(this._w(p)>=this._w(i))break; this._swap(p,i); i=p; } }
+  _down(i){ const n=this.heap.length; while(true){ let m=i,l=2*i+1,r=2*i+2; if(l<n&&this._w(l)>this._w(m))m=l; if(r<n&&this._w(r)>this._w(m))m=r; if(m===i)break; this._swap(i,m); i=m; } }
+  enqueue(r){ this.heap.push(r); this._up(this.heap.length-1); }
+  dequeue(){ if(!this.heap.length)return null; const t=this.heap[0],l=this.heap.pop(); if(this.heap.length){this.heap[0]=l;this._down(0);} return t; }
+  peek(){ return this.heap[0]||null; }
+  size(){ return this.heap.length; }
+  removeById(id){ const i=this.heap.findIndex(r=>r.id===id); if(i<0)return; const l=this.heap.pop(); if(i<this.heap.length){this.heap[i]=l;this._up(i);this._down(i);} }
+  sorted(){ return [...this.heap].sort((a,b)=>(SEV_W[b.severity]||0)-(SEV_W[a.severity]||0)); }
+}
+
+/* ═══════════════════════════════════════
+   DSA: HASHMAP
+═══════════════════════════════════════ */
+class ReportHashMap {
+  constructor(){ this.map=new Map(); this.wardMap=new Map(); this.statusMap=new Map(); }
+  set(id,r){
+    this.map.set(id,r);
+    const w=r.ward||'Unknown'; this.wardMap.set(w,(this.wardMap.get(w)||0)+1);
+    if(!this.statusMap.has(r.status))this.statusMap.set(r.status,new Set());
+    this.statusMap.get(r.status).add(id);
+  }
+  get(id){ return this.map.get(id)||null; }
+  has(id){ return this.map.has(id); }
+  size(){ return this.map.size; }
+  all(){ return [...this.map.values()]; }
+  stats(){ const s={}; for(const[k,v] of this.statusMap)s[k]=v.size; return{total:this.map.size,byStatus:s}; }
+}
+
+/* ═══════════════════════════════════════
+   DSA: SINGLY LINKED LIST
+═══════════════════════════════════════ */
+class LLNode{ constructor(d){this.data=d;this.next=null;} }
+class ActivityLog {
+  constructor(max=200){ this.head=null; this.size=0; this.max=max; }
+  prepend(d){
+    const n=new LLNode({...d,ts:new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})});
+    n.next=this.head; this.head=n; this.size++;
+    if(this.size>this.max)this._evict();
+  }
+  _evict(){ let c=this.head; while(c&&c.next&&c.next.next)c=c.next; if(c)c.next=null; this.size--; }
+  toArr(n=30){ const a=[]; let c=this.head; while(c&&a.length<n){a.push(c.data);c=c.next;} return a; }
+}
+
+/* ═══════════════════════════════════════
+   DSA: GRAPH (Adjacency List) + BFS
+═══════════════════════════════════════ */
+class WardGraph {
+  constructor(){ this.adj=new Map(); this.data=new Map(); }
+  addWard(id,name,ins=[]){ this.adj.set(id,new Set()); this.data.set(id,{id,name,ins}); }
+  addEdge(a,b){ this.adj.get(a)?.add(b); this.adj.get(b)?.add(a); }
+  bfsNearest(start){
+    if(!this.adj.has(start))return null;
+    const vis=new Set(),q=[{ward:start,dist:0}]; vis.add(start);
+    while(q.length){
+      const{ward,dist}=q.shift(); const d=this.data.get(ward);
+      if(d&&d.ins.length)return{ward,dist,inspector:d.ins[0],wardName:d.name};
+      for(const nb of(this.adj.get(ward)||[])) if(!vis.has(nb)){vis.add(nb);q.push({ward:nb,dist:dist+1});}
+    }
+    return null;
+  }
+  seed(){
+    const wards=[
+      {id:'W1',name:'Banjara Hills',ins:['INS-001']},{id:'W2',name:'Jubilee Hills',ins:['INS-002']},
+      {id:'W3',name:'Madhapur',ins:[]},{id:'W4',name:'Kondapur',ins:['INS-003']},
+      {id:'W5',name:'Gachibowli',ins:[]},{id:'W6',name:'Kukatpally',ins:['INS-004']},
+      {id:'W7',name:'Ameerpet',ins:[]},{id:'W8',name:'Secunderabad',ins:['INS-005']},
+      {id:'W9',name:'Begumpet',ins:[]},{id:'W10',name:'Charminar',ins:['INS-006']},
+      {id:'W11',name:'LB Nagar',ins:['INS-007']},{id:'W12',name:'Dilsukhnagar',ins:[]}
+    ];
+    wards.forEach(w=>this.addWard(w.id,w.name,w.ins));
+    [['W1','W2'],['W1','W7'],['W2','W3'],['W3','W4'],['W3','W5'],
+     ['W4','W5'],['W5','W6'],['W6','W7'],['W7','W8'],['W7','W9'],
+     ['W8','W9'],['W9','W10'],['W10','W11'],['W11','W12'],['W12','W7']
+    ].forEach(([a,b])=>this.addEdge(a,b));
+  }
+}
+
+/* Instantiate DSA store */
+const pq      = new PriorityQueue();
+const hashMap = new ReportHashMap();
+const log     = new ActivityLog();
+const graph   = new WardGraph();
+graph.seed();
+
+/* Seed graph view on load */
+window.addEventListener('load', ()=>{
+  const el=document.getElementById('graphNodes');
+  const nodes=[...graph.data.values()];
+  el.innerHTML=nodes.map(w=>`
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:.3rem .5rem;border-bottom:1px solid rgba(255,255,255,.04);font-size:.78rem;">
+      <span style="color:#aab;">${w.id} — ${w.name}</span>
+      <span style="font-size:.68rem;padding:.1rem .45rem;border-radius:3px;${w.ins.length?'background:rgba(34,197,94,.15);color:var(--green);':'background:rgba(239,68,68,.1);color:#f87;'}">${w.ins.length?'✅ '+w.ins[0]:'No Inspector'}</span>
+    </div>`).join('');
+});
+
+/* ═══════════════════════════════════════
+   PAGE NAVIGATION
+═══════════════════════════════════════ */
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+function goHome(){ showPage('page-home'); closeAllModals(); }
+
+/* ═══════════════════════════════════════
+   MODALS — Track / Statistics / Contact
+═══════════════════════════════════════ */
+function openModal(id){
+  closeAllModals();
+  document.getElementById('modalBackdrop').style.display='block';
+  document.getElementById(id).style.display='block';
+  document.getElementById(id).style.animation='modalIn .25s ease';
+}
+function closeAllModals(){
+  ['modalBackdrop','modalTrack','modalStats','modalContact'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.style.display='none';
+  });
+}
+
+function openTrackReport(){
+  openModal('modalTrack');
+  document.getElementById('trackResult').innerHTML='<div style="text-align:center;color:#445;font-size:.82rem;padding:1rem;">Enter a Report ID above to check its status.</div>';
+  // Show user's reports if logged in
+  const myList = document.getElementById('trackMyList');
+  const myItems = document.getElementById('trackMyItems');
+  const reports = hashMap.all();
+  if(currentUser && reports.length){
+    myList.style.display='block';
+    myItems.innerHTML = reports.slice().reverse().slice(0,4).map(r=>`
+      <div onclick="document.getElementById('trackInput').value='${r.id}';trackReport();" style="display:flex;align-items:center;gap:.6rem;padding:.45rem .6rem;border-radius:5px;cursor:pointer;transition:background .15s;" onmouseover="this.style.background='rgba(255,107,0,.08)'" onmouseout="this.style.background='transparent'">
+        <span style="font-family:monospace;font-size:.75rem;color:var(--saffron);">${r.id}</span>
+        <span style="flex:1;font-size:.78rem;color:#aab;">${r.loc.slice(0,28)}…</span>
+        <span class="log-status ls-${r.status.toLowerCase()}" style="font-size:.62rem;">${r.status}</span>
+      </div>`).join('');
+  } else {
+    myList.style.display='none';
+  }
+}
+
+function trackReport(){
+  const id = document.getElementById('trackInput').value.trim().toUpperCase();
+  const el = document.getElementById('trackResult');
+  if(!id){ el.innerHTML='<div style="color:#f87;font-size:.82rem;padding:.5rem;">Please enter a Report ID.</div>'; return; }
+  const r = hashMap.get(id);
+  if(!r){
+    el.innerHTML=`<div style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);border-radius:6px;padding:1rem;text-align:center;">
+      <div style="font-size:1.3rem;margin-bottom:.4rem;">🔍</div>
+      <div style="color:#f87;font-weight:600;font-size:.88rem;">Report not found</div>
+      <div style="color:#445;font-size:.75rem;margin-top:.3rem;">No report found for ID "<strong style="color:#aab;">${id}</strong>". Check the ID and try again.</div>
+    </div>`; return;
+  }
+  const sevCol={Critical:'var(--red)',High:'var(--saffron)',Medium:'var(--yellow)',Low:'var(--green)'};
+  const statusCol={Pending:'var(--yellow)',Resolved:'var(--green)',Assigned:'var(--saffron)'};
+  el.innerHTML=`
+    <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,107,0,.2);border-radius:8px;padding:1.1rem;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.8rem;">
+        <div>
+          <div style="font-family:'Rajdhani',sans-serif;font-size:1.1rem;font-weight:700;color:white;">${r.id}</div>
+          <div style="font-size:.75rem;color:#556;margin-top:.1rem;">Filed: ${r.ts}</div>
+        </div>
+        <span class="log-status" style="background:rgba(255,107,0,.15);color:${statusCol[r.status]||'#aab'};font-size:.75rem;padding:.3rem .7rem;">${r.status}</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem;font-size:.8rem;">
+        <div><span style="color:#445;">📍 Location</span><br><span style="color:#aab;">${r.loc}</span></div>
+        <div><span style="color:#445;">🚦 Severity</span><br><span style="font-weight:700;color:${sevCol[r.severity]||'#aab'};">${r.severity}</span></div>
+        <div><span style="color:#445;">🏙 Ward</span><br><span style="color:#aab;">${r.ward||'—'}</span></div>
+        <div><span style="color:#445;">📷 Photos</span><br><span style="color:#aab;">${r.photos} uploaded</span></div>
+      </div>
+      <!-- Progress tracker -->
+      <div style="margin-top:.9rem;padding-top:.9rem;border-top:1px solid rgba(255,255,255,.06);">
+        <div style="font-size:.7rem;color:#445;letter-spacing:1px;text-transform:uppercase;margin-bottom:.6rem;">Repair Progress</div>
+        <div style="display:flex;align-items:center;gap:0;">
+          ${['Filed','Assigned','In Progress','Resolved'].map((step,i)=>{
+            const done = r.status==='Resolved'?true:(r.status==='Assigned'&&i<2)||(r.status==='Pending'&&i<1);
+            const active = (r.status==='Pending'&&i===0)||(r.status==='Assigned'&&i===1)||(r.status==='Resolved'&&i===3);
+            return `<div style="flex:1;text-align:center;">
+              <div style="width:24px;height:24px;border-radius:50%;margin:0 auto .3rem;display:flex;align-items:center;justify-content:center;font-size:.7rem;
+                background:${active?'var(--saffron)':done?'var(--green)':'rgba(255,255,255,.08)'};
+                border:2px solid ${active?'var(--saffron)':done?'var(--green)':'rgba(255,255,255,.1)'};
+                color:${active||done?'white':'#445'};">${done&&!active?'✓':i+1}</div>
+              <div style="font-size:.6rem;color:${active?'var(--saffron)':done?'var(--green)':'#334'};">${step}</div>
+            </div>${i<3?`<div style="flex:0 0 24px;height:2px;background:${done?'var(--green)':'rgba(255,255,255,.07)'};margin-bottom:1.2rem;"></div>`:''}`;
+          }).join('')}
+        </div>
+      </div>
+    </div>`;
+}
+
+function openStatistics(){
+  openModal('modalStats');
+  const reports = hashMap.all();
+  const total    = stats.total;
+  const resolved = stats.resolved;
+  const pending  = stats.pending;
+  const critical = stats.critical;
+  const rate     = total ? Math.round(resolved / total * 100) : 0;
+
+  // KPIs
+  document.getElementById('st-total').textContent    = total;
+  document.getElementById('st-pending').textContent  = pending;
+  document.getElementById('st-rate').textContent     = rate + '%';
+  document.getElementById('st-total-sub').textContent  = total ? critical + ' critical report' + (critical!==1?'s':'') : 'No reports yet';
+  document.getElementById('st-pending-sub').textContent= pending ? pending + ' awaiting repair' : 'All clear ✅';
+  document.getElementById('st-rate-sub').style.color   = rate >= 50 ? 'var(--green)' : 'var(--yellow)';
+  document.getElementById('st-rate-sub').textContent   = total ? resolved + ' of ' + total + ' resolved' : 'Based on your reports';
+
+  // Ward breakdown
+  const wardMap = {};
+  reports.forEach(r => {
+    const w = (r.ward || 'Unknown').split('–')[0].trim();
+    wardMap[w] = (wardMap[w]||0) + 1;
+  });
+  const wardEntries = Object.entries(wardMap).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  const maxW = wardEntries.length ? wardEntries[0][1] : 1;
+  const wardsEl = document.getElementById('st-wards');
+  if (!wardEntries.length) {
+    wardsEl.innerHTML = '<div style="text-align:center;color:#334;padding:1rem;font-size:.82rem;">Submit reports to see ward breakdown</div>';
+  } else {
+    wardsEl.innerHTML = '<div style="display:flex;flex-direction:column;gap:.5rem;">' +
+      wardEntries.map(([ward, cnt], i) =>
+        '<div style="display:flex;align-items:center;gap:.8rem;font-size:.8rem;">' +
+          '<span style="color:var(--saffron);font-family:Rajdhani,sans-serif;font-weight:700;width:18px;">' + (i+1) + '.</span>' +
+          '<span style="flex:1;color:#aab;">' + ward + '</span>' +
+          '<div style="width:110px;height:8px;background:rgba(255,255,255,.06);border-radius:4px;overflow:hidden;">' +
+            '<div style="height:100%;width:' + Math.round(cnt/maxW*100) + '%;background:linear-gradient(90deg,var(--saffron),var(--gold));border-radius:4px;"></div>' +
+          '</div>' +
+          '<span style="color:var(--gold);font-weight:700;width:24px;text-align:right;">' + cnt + '</span>' +
+        '</div>'
+      ).join('') + '</div>';
+  }
+
+  // Severity breakdown
+  const sevCounts = {Critical:0, High:0, Medium:0, Low:0};
+  reports.forEach(r => { if (sevCounts[r.severity]!==undefined) sevCounts[r.severity]++; });
+  const sevColors = {Critical:'#ef4444', High:'#FF6B00', Medium:'#eab308', Low:'#22c55e'};
+  const sevEl = document.getElementById('st-severity');
+  if (!total) {
+    sevEl.innerHTML = '<div style="text-align:center;color:#334;padding:.5rem;font-size:.8rem;">No data yet</div>';
+  } else {
+    sevEl.innerHTML = Object.entries(sevCounts).map(([sev, n]) =>
+      '<div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.5rem;font-size:.8rem;">' +
+        '<span style="width:10px;height:10px;border-radius:50%;background:' + sevColors[sev] + ';display:inline-block;flex-shrink:0;"></span>' +
+        '<span style="flex:1;color:#aab;">' + sev + '</span>' +
+        '<span style="color:white;font-weight:700;">' + n + '</span>' +
+      '</div>'
+    ).join('');
+  }
+
+  // Status summary
+  const statusCounts = {Pending:0, Assigned:0, Resolved:0};
+  reports.forEach(r => { if (statusCounts[r.status]!==undefined) statusCounts[r.status]++; });
+  const statusIcons = {Pending:'⏳', Assigned:'🔧', Resolved:'✅'};
+  const statusColors = {Pending:'var(--yellow)', Assigned:'var(--saffron)', Resolved:'var(--green)'};
+  const statusEl = document.getElementById('st-status');
+  if (!total) {
+    statusEl.innerHTML = '<div style="text-align:center;color:#334;padding:.5rem;font-size:.8rem;">No data yet</div>';
+  } else {
+    statusEl.innerHTML = Object.entries(statusCounts).map(([st, n]) =>
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem;font-size:.8rem;">' +
+        '<span style="color:#aab;">' + statusIcons[st] + ' ' + st + '</span>' +
+        '<span style="color:' + statusColors[st] + ';font-weight:700;">' + n + '</span>' +
+      '</div>'
+    ).join('');
+  }
+
+  // Footer
+  const now = new Date();
+  document.getElementById('st-footer').textContent =
+    'Live session data · Last updated: ' + now.toLocaleTimeString() +
+    (total ? ' · ' + total + ' report' + (total!==1?'s':'') + ' in this session' : ' · Submit reports to populate stats');
+}
+
+function openContact(){ openModal('modalContact'); }
+
+function sendContactMsg(){
+  const name=document.getElementById('cName').value.trim();
+  const contact=document.getElementById('cContact').value.trim();
+  const subject=document.getElementById('cSubject').value;
+  const msg=document.getElementById('cMsg').value.trim();
+  if(!name||!contact||!subject||!msg){ showToastMsg('⚠️','Incomplete','Please fill all fields before sending.'); return; }
+  document.getElementById('cName').value='';
+  document.getElementById('cContact').value='';
+  document.getElementById('cSubject').value='';
+  document.getElementById('cMsg').value='';
+  const sent=document.getElementById('contactSentMsg');
+  sent.style.display='inline';
+  setTimeout(()=>sent.style.display='none',4000);
+  showToastMsg('📧','Message Sent!','GHMC will respond within 24 hours.');
+}
+
+function goLogin(tab='login'){
+  showPage('page-login');
+  switchTab(tab);
+}
+
+function goDash(){
+  showPage('page-dash');
+  updateDashHeader();
+}
+
+function updateDashHeader(){
+  if(currentUser){
+    document.getElementById('userChip').classList.add('show');
+    document.getElementById('userChipName').textContent=currentUser.name;
+    document.getElementById('logoutBtn').style.display='inline';
+    document.getElementById('btnLogin').style.display='none';
+    document.getElementById('btnRegister').style.display='none';
+  }
+}
+
+/* ═══════════════════════════════════════
+   AUTH
+═══════════════════════════════════════ */
+// Simple demo users store
+const USERS = {};
+
+function switchTab(tab){
+  document.getElementById('formLogin').classList.toggle('active', tab==='login');
+  document.getElementById('formReg').classList.toggle('active',   tab==='register');
+  document.getElementById('tabLogin').classList.toggle('active',  tab==='login');
+  document.getElementById('tabReg').classList.toggle('active',    tab==='register');
+  document.getElementById('loginErr').classList.remove('show');
+}
+
+function showErr(msg){ const e=document.getElementById('loginErr'); e.textContent=msg; e.classList.add('show'); }
+
+function doLogin(){
+  const id=document.getElementById('loginId').value.trim();
+  const pw=document.getElementById('loginPw').value.trim();
+  if(!id||!pw){ showErr('Please enter your mobile/email and password.'); return; }
+
+  // Check registered users or demo account
+  const user = USERS[id] || (id==='demo'&&pw==='demo' ? {name:'Demo Citizen',mobile:'demo',ward:'Banjara Hills – Ward 1'} : null);
+  if(!user||user.password!==pw&&!(id==='demo'&&pw==='demo')){
+    showErr('Invalid credentials.');
+    return;
+  }
+  completeLogin(user);
+}
+
+function doRegister(){
+  const name=document.getElementById('regName').value.trim();
+  const mobile=document.getElementById('regMobile').value.trim();
+  const email=document.getElementById('regEmail').value.trim();
+  const ward=document.getElementById('regWard').value;
+  const pw=document.getElementById('regPw').value.trim();
+  if(!name||!mobile||!pw){ showErr('Name, mobile and password are required.'); return; }
+  if(USERS[mobile]){ showErr('Mobile already registered. Please login.'); return; }
+  const user={name,mobile,email,ward,password:pw};
+  USERS[mobile]=user;
+  if(email)USERS[email]=user;
+  completeLogin(user);
+}
+
+function doAadhaarLogin(){
+  const user={name:'Aadhaar Citizen',mobile:'aadhaar',ward:'Secunderabad – Ward 8',password:'aadhaar'};
+  completeLogin(user);
+}
+
+function completeLogin(user){
+  currentUser=user;
+  showToastMsg('✅','Login Successful!',`Welcome, ${user.name}! Redirecting to dashboard…`);
+  setTimeout(()=>{
+    goDash();
+    updateDashHeader();
+  }, 1000);
+}
+
+function doLogout(){
+  currentUser=null;
+  document.getElementById('userChip').classList.remove('show');
+  document.getElementById('logoutBtn').style.display='none';
+  document.getElementById('btnLogin').style.display='inline-flex';
+  document.getElementById('btnRegister').style.display='inline-flex';
+  showPage('page-home');
+  showToastMsg('👋','Logged Out','You have been logged out safely.');
+}
+
+/* ═══════════════════════════════════════
+   DASHBOARD SECTIONS
+═══════════════════════════════════════ */
+function switchDash(sec, el){
+  document.querySelectorAll('.dash-section').forEach(s=>s.classList.remove('active'));
+  const target = document.getElementById('sec-'+sec);
+  if(target) target.classList.add('active');
+  document.querySelectorAll('.sb-item').forEach(s=>s.classList.remove('act'));
+  if(el) el.classList.add('act');
+  if(sec==='dsa')           renderDSAFull();
+  if(sec==='myreports')     renderMyReports();
+  if(sec==='analytics')     renderAnalytics();
+  if(sec==='profile')       loadProfile();
+  if(sec==='notifications') renderNotifications();
+  if(sec==='map')           { const mc=document.getElementById('mapReportCount'); if(mc) mc.textContent=hashMap.size(); }
+}
+
+/* ═══════════════════════════════════════
+   REPORT FORM
+═══════════════════════════════════════ */
+function setSev(btn, sev){
+  selectedSev=sev;
+  document.querySelectorAll('.sev-pill').forEach(b=>b.className='sev-pill');
+  const cls={Low:'sel-low',Medium:'sel-med',High:'sel-hi',Critical:'sel-crit'};
+  btn.classList.add(cls[sev]);
+}
+
+function handlePhotos(input){
+  uploadedPhotos=[...input.files].slice(0,5);
+  renderPreviews();
+}
+
+function renderPreviews(){
+  const s=document.getElementById('previewStrip');
+  s.innerHTML='';
+  uploadedPhotos.forEach((f,i)=>{
+    const url=URL.createObjectURL(f);
+    const w=document.createElement('div');
+    w.className='thumb-wrap';
+    w.innerHTML=`<img src="${url}" class="thumb-img"><button class="thumb-del" onclick="removePhoto(${i})">✕</button>`;
+    s.appendChild(w);
+  });
+}
+
+function removePhoto(i){ uploadedPhotos.splice(i,1); renderPreviews(); }
+
+function clearReportForm(){
+  document.getElementById('rLoc').value='';
+  document.getElementById('rDesc').value='';
+  document.getElementById('rContact').value='';
+  document.querySelectorAll('.sev-pill').forEach(b=>b.className='sev-pill');
+  selectedSev=''; uploadedPhotos=[]; renderPreviews();
+}
+
+function submitReport(){
+  const loc=document.getElementById('rLoc').value.trim();
+  const desc=document.getElementById('rDesc').value.trim();
+  if(!loc){ showToastMsg('📍','Missing Location','Please enter the pothole location.'); return; }
+  if(!desc){ showToastMsg('📝','Missing Description','Please describe the pothole.'); return; }
+  if(!selectedSev){ showToastMsg('🚦','Select Severity','Please choose a severity level.'); return; }
+
+  const id=`RPT-${(++reportCounter)}`;
+  const ts=new Date().toLocaleString('en-IN',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+  const wardKey = currentUser?.ward?.match(/Ward (\w+)/)?.[0] || 'W1';
+  const wardId = 'W'+(parseInt(wardKey.replace('Ward ',''))||1);
+
+  const report={
+    id, loc, desc, severity:selectedSev,
+    status:'Pending', photos:uploadedPhotos.length,
+    ts, userId:currentUser?.name,
+    ward: currentUser?.ward||'Banjara Hills'
+  };
+
+  /* Insert into all 3 DSA structures */
+  pq.enqueue(report);
+  hashMap.set(id, report);
+  log.prepend({type:'CREATED', id, loc:loc.slice(0,30), sev:selectedSev, photos:report.photos});
+
+  /* BFS — find nearest inspector */
+  const assigned=graph.bfsNearest(wardId);
+
+  /* Update stats */
+  stats.total++; stats.pending++;
+  if(selectedSev==='Critical')stats.critical++;
+  updateStatCards();
+
+  /* Render DSA panels */
+  renderPQ(); renderHM(); renderLL();
+  renderMyReports();
+
+  const assignMsg = assigned ? `Assigned to ${assigned.inspector} (${assigned.wardName})` : 'Inspector being assigned';
+  showToastMsg('🚨',`${id} Filed!`,`Priority: ${selectedSev} | ${assignMsg}`);
+  clearReportForm();
+}
+
+function updateStatCards(){
+  document.getElementById('dTotal').textContent=stats.total;
+  document.getElementById('dPending').textContent=stats.pending;
+  document.getElementById('dResolved').textContent=stats.resolved;
+  document.getElementById('dCritical').textContent=stats.critical;
+}
+
+/* ═══════════════════════════════════════
+   DSA RENDER HELPERS
+═══════════════════════════════════════ */
+function sevClass(s){ return{Critical:'p1',High:'p2',Medium:'p3',Low:'p4'}[s]||'p4'; }
+
+function renderPQ(){
+  const el=document.getElementById('pqView');
+  const sorted=pq.sorted();
+  if(!sorted.length){el.innerHTML='<div class="empty-s">Queue is empty…</div>';return;}
+  el.innerHTML=sorted.slice(0,5).map((r,i)=>`
+    <div class="pq-item ${sevClass(r.severity)}">
+      <div><div class="log-id">[${i===0?'HEAD →':'NODE '+(i+1)+' →'}] ${r.id}</div><div>${r.loc.slice(0,32)}…</div></div>
+      <span class="pq-badge">${r.severity}</span>
+    </div>`).join('');
+  if(sorted.length>5)el.innerHTML+=`<div style="font-size:.7rem;color:#445;text-align:center;padding:.3rem;">…${sorted.length-5} more</div>`;
+}
+
+function renderHM(){
+  const el=document.getElementById('hmView');
+  if(!hashMap.size()){el.innerHTML='<div class="empty-s">No entries yet…</div>';return;}
+  const entries=hashMap.all().slice(-5).reverse();
+  el.innerHTML=entries.map(r=>`
+    <div class="hm-row"><span class="hm-key">"${r.id}"</span><span>→</span><span class="hm-val">${r.severity} · ${r.status}</span></div>`).join('');
+  el.innerHTML+=`<div style="font-size:.7rem;color:#445;margin-top:.4rem;text-align:right;">Total: ${hashMap.size()} · Lookup O(1)</div>`;
+}
+
+function renderLL(){
+  const el=document.getElementById('llView');
+  const items=log.toArr(5);
+  if(!items.length){el.innerHTML='<div class="empty-s">No activity yet…</div>';return;}
+  el.innerHTML=items.map((item,i)=>`
+    <div class="log-item">
+      <div class="log-dot ${(item.type||'').toLowerCase()==='created'?'assigned':'pending'}"></div>
+      <div class="log-info">
+        <div class="log-id">${item.id}${i===0?' ← HEAD':''} · ${item.ts}</div>
+        <div class="log-desc">${item.loc}</div>
+        <div class="log-meta"><span>📷 ${item.photos} photo${item.photos!==1?'s':''}</span></div>
+      </div>
+      <span class="log-status ${item.sev==='Critical'?'ls-assigned':item.sev==='High'?'ls-assigned':'ls-pending'}">${item.sev}</span>
+    </div>`).join('');
+  if(log.size>5)el.innerHTML+=`<div style="font-size:.7rem;color:#445;text-align:center;padding:.3rem;">…${log.size-5} earlier nodes</div>`;
+}
+
+function renderDSAFull(){
+  /* PQ full */
+  const pqEl=document.getElementById('pqViewFull');
+  const sorted=pq.sorted();
+  pqEl.innerHTML=sorted.length?sorted.map((r,i)=>`
+    <div class="pq-item ${sevClass(r.severity)}" style="margin-bottom:.4rem;">
+      <div><div class="log-id">[${i===0?'MAX →':'   '+(i+1)+'.'}] ${r.id}</div><div>${r.loc}</div></div>
+      <span class="pq-badge">${r.severity}</span>
+    </div>`).join(''):'<div class="empty-s">Queue empty.</div>';
+
+  /* HM full */
+  const hmEl=document.getElementById('hmViewFull');
+  const all=hashMap.all();
+  const hStats=hashMap.stats();
+  hmEl.innerHTML=all.length?`
+    <div style="display:flex;gap:1rem;margin-bottom:.6rem;">
+      ${Object.entries(hStats.byStatus).map(([s,n])=>`<div style="font-size:.75rem;color:#aab;">${s}: <strong style="color:var(--gold)">${n}</strong></div>`).join('')}
+    </div>`+all.slice(-8).reverse().map(r=>`
+    <div class="hm-row"><span class="hm-key">"${r.id}"</span><span>→</span><span class="hm-val">${r.severity} · ${r.status}</span></div>`).join(''):
+    '<div class="empty-s">No data.</div>';
+
+  /* LL full */
+  const llEl=document.getElementById('llViewFull');
+  const logItems=log.toArr(12);
+  llEl.innerHTML=logItems.length?logItems.map((item,i)=>`
+    <div class="log-item">
+      <div class="log-dot assigned"></div>
+      <div><div class="log-id">${item.id}${i===0?' ← HEAD':''}</div>
+      <div class="log-desc">${item.loc} | ${item.sev}</div></div>
+    </div>`).join(''):'<div class="empty-s">No activity.</div>';
+}
+
+function renderMyReports(){
+  const reports=hashMap.all();
+  const pill=document.getElementById('reportCountPill');
+  pill.textContent=`${reports.length} report${reports.length!==1?'s':''}`;
+  const tbody=document.getElementById('myTableBody');
+  if(!reports.length){
+    tbody.innerHTML='<tr><td colspan="7" style="text-align:center;color:#334;padding:2.5rem;">No reports yet. Submit your first report!</td></tr>';
+    return;
+  }
+  tbody.innerHTML=reports.slice().reverse().map(r=>`
+    <tr>
+      <td><span style="font-family:monospace;color:var(--saffron);font-size:.8rem;">${r.id}</span></td>
+      <td>${r.loc.slice(0,30)}${r.loc.length>30?'…':''}</td>
+      <td><span class="sev-tag ${r.severity}">${r.severity}</span></td>
+      <td>📷 ${r.photos}</td>
+      <td><span class="log-status ls-${r.status.toLowerCase()}">${r.status}</span></td>
+      <td style="font-size:.75rem;color:#556;">${r.ts}</td>
+      <td><button onclick="markResolved('${r.id}')" style="background:rgba(34,197,94,.15);color:var(--green);border:1px solid rgba(34,197,94,.3);border-radius:3px;padding:.25rem .6rem;font-size:.72rem;cursor:pointer;">Mark Resolved</button></td>
+    </tr>`).join('');
+}
+
+function markResolved(id){
+  const r=hashMap.get(id);
+  if(!r)return;
+  r.status='Resolved';
+  pq.removeById(id);
+  log.prepend({type:'RESOLVED',id,loc:r.loc.slice(0,30),sev:r.severity,photos:r.photos});
+  stats.pending=Math.max(0,stats.pending-1);
+  stats.resolved++;
+  updateStatCards();
+  renderPQ();renderHM();renderLL();renderMyReports();
+  showToastMsg('✅',`${id} Resolved!','Report marked as resolved and removed from the priority queue.`);
+}
+
+/* ═══════════════════════════════════════
+   TOAST
+═══════════════════════════════════════ */
+let toastTimer;
+function showToastMsg(icon,title,body){
+  clearTimeout(toastTimer);
+  document.getElementById('tIcon').textContent=icon;
+  document.getElementById('tTitle').textContent=title;
+  document.getElementById('tBody').textContent=body;
+  const t=document.getElementById('globalToast');
+  t.classList.add('show');
+  toastTimer=setTimeout(()=>t.classList.remove('show'),3800);
+}
+
+/* ═══════════════════════════════════════
+   DRAG & DROP
+═══════════════════════════════════════ */
+const uz=document.getElementById('uploadZone');
+uz.addEventListener('dragover',e=>{e.preventDefault();uz.classList.add('drag');});
+uz.addEventListener('dragleave',()=>uz.classList.remove('drag'));
+uz.addEventListener('drop',e=>{
+  e.preventDefault();uz.classList.remove('drag');
+  uploadedPhotos=[...e.dataTransfer.files].filter(f=>f.type.startsWith('image/')).slice(0,5);
+  renderPreviews();
+});
+
+/* ═══════════════════════════════════════
+   ANALYTICS
+═══════════════════════════════════════ */
+function renderAnalytics(){
+  // KPI cards
+  document.getElementById('aTotal').textContent    = stats.total;
+  document.getElementById('aPending').textContent  = stats.pending;
+  document.getElementById('aResolved').textContent = stats.resolved;
+  document.getElementById('aCritical').textContent = stats.critical;
+  const rate = stats.total ? Math.round(stats.resolved/stats.total*100) : 0;
+  document.getElementById('aResRate').textContent  = rate+'% resolved';
+
+  const reports = hashMap.all();
+
+  // Severity chart
+  const sevEl = document.getElementById('sevChart');
+  const sevCounts = {Critical:0,High:0,Medium:0,Low:0};
+  reports.forEach(r=>{ if(sevCounts[r.severity]!==undefined) sevCounts[r.severity]++; });
+  const sevColors = {Critical:'#ef4444',High:'#FF6B00',Medium:'#eab308',Low:'#22c55e'};
+  const maxSev = Math.max(...Object.values(sevCounts),1);
+  sevEl.innerHTML = Object.entries(sevCounts).map(([sev,cnt])=>`
+    <div class="bar-row">
+      <div class="bar-label">${sev}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${Math.round(cnt/maxSev*100)}%;background:${sevColors[sev]};"></div></div>
+      <div class="bar-val">${cnt}</div>
+    </div>`).join('') || '<div style="text-align:center;color:#334;padding:1rem;font-size:.82rem;">No data yet</div>';
+
+  // Ward chart
+  const wardEl = document.getElementById('wardChart');
+  const wardMap = {};
+  reports.forEach(r=>{ const w=r.ward||'Unknown'; wardMap[w]=(wardMap[w]||0)+1; });
+  const sorted = Object.entries(wardMap).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  const maxW = Math.max(...sorted.map(e=>e[1]),1);
+  wardEl.innerHTML = sorted.length ? sorted.map(([ward,cnt])=>`
+    <div class="bar-row">
+      <div class="bar-label" style="font-size:.72rem;">${ward.split('–')[0].trim()}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${Math.round(cnt/maxW*100)}%;background:linear-gradient(90deg,var(--saffron),var(--gold));"></div></div>
+      <div class="bar-val">${cnt}</div>
+    </div>`).join('') :
+    '<div style="text-align:center;color:#334;padding:1rem;font-size:.82rem;">No ward data yet</div>';
+
+  // Timeline — last 7 submissions as bar chart
+  const tlEl = document.getElementById('timelineChart');
+  if(!reports.length){ tlEl.innerHTML='<div style="text-align:center;color:#334;padding:1rem;font-size:.82rem;width:100%;">No timeline data yet</div>'; return; }
+  const buckets={};
+  reports.forEach(r=>{
+    const d=r.ts?r.ts.split(' ')[0]:'Today';
+    if(!buckets[d]) buckets[d]={sub:0,res:0};
+    buckets[d].sub++;
+    if(r.status==='Resolved') buckets[d].res++;
+  });
+  const days=Object.entries(buckets).slice(-7);
+  const maxTL=Math.max(...days.map(d=>d[1].sub),1);
+  tlEl.style.display='flex'; tlEl.style.alignItems='flex-end'; tlEl.style.gap='8px'; tlEl.style.height='100px';
+  tlEl.innerHTML=days.map(([date,d])=>`
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;">
+      <div style="width:100%;background:var(--saffron);border-radius:3px 3px 0 0;height:${Math.round(d.sub/maxTL*70)}px;opacity:.85;"></div>
+      <div style="width:100%;background:var(--green);border-radius:3px 3px 0 0;height:${Math.round(d.res/maxTL*70)}px;margin-top:-${Math.round(d.res/maxTL*70)}px;opacity:.7;"></div>
+      <div style="font-size:.58rem;color:#445;white-space:nowrap;">${date}</div>
+    </div>`).join('');
+}
+
+/* ═══════════════════════════════════════
+   PROFILE
+═══════════════════════════════════════ */
+function loadProfile(){
+  if(!currentUser) return;
+  const total    = stats.total;
+  const resolved = stats.resolved;
+  const pending  = stats.pending;
+  const critical = stats.critical;
+  const rate     = total ? Math.round(resolved/total*100) : 0;
+  const score    = total*10 + resolved*5 + critical*3;
+
+  // Avatar card
+  document.getElementById('profileName').textContent  = currentUser.name||'—';
+  document.getElementById('profileWard').textContent  = currentUser.ward||'Ward not set';
+  document.getElementById('profileEmail').textContent = currentUser.email||currentUser.mobile||'—';
+
+  // Citizen level badge
+  let level='🌱 New Citizen', levelColor='rgba(100,200,100,.2)';
+  if(score>=200){ level='🥇 Champion Citizen'; levelColor='linear-gradient(90deg,#FFB300,#FF6B00)'; }
+  else if(score>=100){ level='🥈 Senior Citizen Reporter'; levelColor='linear-gradient(90deg,#667,#aab)'; }
+  else if(score>=50){ level='🏅 Active Citizen'; levelColor='linear-gradient(90deg,var(--saffron),var(--gold))'; }
+  else if(score>=10){ level='⭐ Rising Citizen'; levelColor='rgba(255,179,0,.25)'; }
+  const badge = document.getElementById('profileBadgeLevel');
+  badge.textContent = level;
+  badge.style.background = levelColor;
+
+  // Stats
+  document.getElementById('profileTotalR').textContent   = total;
+  document.getElementById('profileResolvedR').textContent= resolved;
+  document.getElementById('profilePendingR').textContent = pending;
+  document.getElementById('profileCriticalR').textContent= critical;
+  document.getElementById('profileRateR').textContent    = rate+'%';
+  document.getElementById('profileWardStat').textContent = currentUser.ward||'Not set';
+
+  // Contribution score bar
+  const nextThreshold = score<10?10:score<50?50:score<100?100:score<200?200:500;
+  const pct = Math.min(Math.round(score/nextThreshold*100),100);
+  document.getElementById('profileScore').textContent   = score+' pts';
+  document.getElementById('profileScoreBar').style.width= pct+'%';
+  document.getElementById('profileNextLevel').textContent= nextThreshold;
+
+  // Badges
+  const badges = [
+    {cond:true,                icon:'🌟', label:'Registered Citizen', color:'rgba(255,107,0,.15)', border:'rgba(255,107,0,.3)', text:'var(--saffron)'},
+    {cond:total>=1,            icon:'📋', label:'First Report',       color:'rgba(255,179,0,.12)', border:'rgba(255,179,0,.3)', text:'var(--gold)'},
+    {cond:total>=5,            icon:'🚧', label:'Road Watcher',       color:'rgba(100,149,237,.1)', border:'rgba(100,149,237,.3)', text:'#8ab4f8'},
+    {cond:total>=10,           icon:'🔥', label:'Pothole Hunter',     color:'rgba(239,68,68,.1)',  border:'rgba(239,68,68,.3)',  text:'#f87'},
+    {cond:resolved>=1,         icon:'✅', label:'Problem Solver',     color:'rgba(34,197,94,.1)',  border:'rgba(34,197,94,.3)',  text:'var(--green)'},
+    {cond:resolved>=5,         icon:'🏆', label:'Road Hero',          color:'rgba(255,215,0,.1)',  border:'rgba(255,215,0,.3)',  text:'#ffd700'},
+    {cond:critical>=1,         icon:'🚨', label:'Critical Reporter',  color:'rgba(239,68,68,.12)', border:'rgba(239,68,68,.3)',  text:'#f87'},
+    {cond:rate===100&&total>=3,icon:'💯', label:'Perfect Resolve',    color:'rgba(34,197,94,.15)', border:'rgba(34,197,94,.4)',  text:'var(--green)'},
+  ];
+  const earned = badges.filter(b=>b.cond);
+  document.getElementById('profileBadges').innerHTML = earned.map(b=>
+    '<div style="background:'+b.color+';border:1px solid '+b.border+';border-radius:20px;padding:.25rem .7rem;font-size:.7rem;color:'+b.text+';display:flex;align-items:center;gap:.3rem;white-space:nowrap;">'+b.icon+' '+b.label+'</div>'
+  ).join('');
+
+  // Recent reports
+  const reports = hashMap.all();
+  const recentEl = document.getElementById('profileRecentReports');
+  if(!reports.length){
+    recentEl.innerHTML='<div style="text-align:center;color:#334;padding:1rem;font-size:.82rem;">No reports yet — submit your first report!</div>';
+  } else {
+    const sevCol={Critical:'var(--red)',High:'var(--saffron)',Medium:'var(--yellow)',Low:'var(--green)'};
+    recentEl.innerHTML='<div style="display:flex;flex-direction:column;gap:.5rem;">'+
+      reports.slice().reverse().slice(0,5).map(r=>
+        '<div style="display:flex;align-items:center;gap:.8rem;background:rgba(255,255,255,.03);border-radius:6px;padding:.6rem .9rem;">'+
+          '<span style="font-family:monospace;font-size:.72rem;color:var(--saffron);flex-shrink:0;">'+r.id+'</span>'+
+          '<span style="flex:1;font-size:.78rem;color:#aab;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+r.loc+'</span>'+
+          '<span style="font-size:.7rem;font-weight:700;color:'+sevCol[r.severity]+';flex-shrink:0;">'+r.severity+'</span>'+
+          '<span class="log-status ls-'+(r.status||'pending').toLowerCase()+'" style="font-size:.65rem;flex-shrink:0;">'+r.status+'</span>'+
+          '<span style="font-size:.65rem;color:#334;flex-shrink:0;">'+r.ts.split(' ')[0]+'</span>'+
+        '</div>'
+      ).join('')+
+    '</div>'+
+    (reports.length>5?'<div style="text-align:center;margin-top:.6rem;"><button onclick="switchDash(\'myreports\',null)" style="background:none;border:1px solid rgba(255,107,0,.3);color:var(--saffron);font-size:.75rem;padding:.3rem .9rem;border-radius:4px;cursor:pointer;font-family:Rajdhani,sans-serif;">View all '+reports.length+' reports →</button></div>':'');
+  }
+
+  // Form fields
+  document.getElementById('pName').value   = currentUser.name||'';
+  document.getElementById('pMobile').value = currentUser.mobile||'';
+  document.getElementById('pEmail').value  = currentUser.email||'';
+  document.getElementById('pBio').value    = currentUser.bio||'';
+  const pWard = document.getElementById('pWard');
+  [...pWard.options].forEach(o=>{ o.selected = o.value===currentUser.ward; });
+}
+
+function saveProfile(){
+  if(!currentUser) return;
+  currentUser.name   = document.getElementById('pName').value.trim()||currentUser.name;
+  currentUser.mobile = document.getElementById('pMobile').value.trim()||currentUser.mobile;
+  currentUser.email  = document.getElementById('pEmail').value.trim();
+  currentUser.ward   = document.getElementById('pWard').value;
+  currentUser.bio    = document.getElementById('pBio').value.trim();
+  document.getElementById('profileName').textContent   = currentUser.name;
+  document.getElementById('profileWard').textContent   = currentUser.ward||'Ward not set';
+  document.getElementById('profileWardStat').textContent= currentUser.ward||'Not set';
+  document.getElementById('profileEmail').textContent  = currentUser.email||currentUser.mobile||'—';
+  document.getElementById('userChipName').textContent  = currentUser.name;
+  const msg = document.getElementById('profileSaveMsg');
+  msg.style.display='inline'; setTimeout(()=>msg.style.display='none',2500);
+  showToastMsg('✅','Profile Saved','Your profile has been updated.');
+}
+
+function changePassword(){
+  const oldPw = document.getElementById('pOldPw').value;
+  const newPw = document.getElementById('pNewPw').value;
+  const confPw= document.getElementById('pConfPw').value;
+  if(!oldPw||!newPw||!confPw){ showToastMsg('⚠️','Error','Please fill all password fields.'); return; }
+  if(currentUser.password && oldPw!==currentUser.password){ showToastMsg('❌','Error','Current password is incorrect.'); return; }
+  if(newPw!==confPw){ showToastMsg('❌','Error','New passwords do not match.'); return; }
+  if(newPw.length<4){ showToastMsg('⚠️','Weak Password','Use at least 4 characters.'); return; }
+  currentUser.password = newPw;
+  document.getElementById('pOldPw').value='';
+  document.getElementById('pNewPw').value='';
+  document.getElementById('pConfPw').value='';
+  showToastMsg('🔒','Password Updated','Your password has been changed successfully.');
+}
+
+/* ═══════════════════════════════════════
+   NOTIFICATIONS
+═══════════════════════════════════════ */
+const NOTIFS = [
+  {id:1, icon:'🚨', iconBg:'rgba(239,68,68,.15)', title:'Report #RPT-1001 Assigned', desc:'Your pothole report at Banjara Hills has been assigned to Inspector Ramesh Kumar. Repair scheduled within 48 hours.', time:'2 mins ago', read:false},
+  {id:2, icon:'✅', iconBg:'rgba(34,197,94,.15)',  title:'Report #RPT-1000 Resolved', desc:'The pothole at Jubilee Hills Road No.4 has been successfully repaired and closed. Thank you for your report!', time:'1 hour ago', read:false},
+  {id:3, icon:'📢', iconBg:'rgba(255,107,0,.15)',  title:'GHMC Maintenance Drive', desc:'GHMC is conducting a special pothole repair drive in Kukatpally & Madhapur this weekend. Report any missed potholes.', time:'3 hours ago', read:false},
+  {id:4, icon:'📊', iconBg:'rgba(255,179,0,.15)',  title:'Weekly Summary', desc:'This week: 12 reports filed, 9 resolved (75% rate). Hyderabad is getting better roads thanks to citizens like you!', time:'Yesterday', read:true},
+  {id:5, icon:'🔔', iconBg:'rgba(102,102,170,.15)', title:'System Update', desc:'GHMC Pothole Portal v2.0 is now live with improved tracking and real-time ward inspector assignment.', time:'2 days ago', read:true},
+];
+
+function renderNotifications(){
+  const unread = NOTIFS.filter(n=>!n.read).length;
+  document.getElementById('unreadCount').textContent = unread ? `${unread} unread` : 'All read';
+  document.getElementById('notifBadge').textContent  = unread||'';
+  document.getElementById('notifBadge').style.display= unread ? 'inline' : 'none';
+
+  document.getElementById('notifList').innerHTML = NOTIFS.map(n=>`
+    <div class="notif-item ${n.read?'read':'unread'}" id="notif-${n.id}">
+      <div class="notif-ico" style="background:${n.iconBg};">${n.icon}</div>
+      <div class="notif-body">
+        <div class="notif-title">${n.title}</div>
+        <div class="notif-desc">${n.desc}</div>
+        <div class="notif-time">🕐 ${n.time}</div>
+      </div>
+      <div class="notif-actions">
+        ${!n.read?`<button class="notif-mark" onclick="markRead(${n.id})">Mark read</button>`:'<span style="font-size:.7rem;color:#334;">Read</span>'}
+      </div>
+    </div>`).join('');
+}
+
+function markRead(id){
+  const n = NOTIFS.find(n=>n.id===id);
+  if(n){ n.read=true; renderNotifications(); }
+}
+
+function markAllRead(){
+  NOTIFS.forEach(n=>n.read=true);
+  renderNotifications();
+}
+
+// Init notifications on load
+document.addEventListener('DOMContentLoaded', ()=>{ renderNotifications(); });
+</script>
+</body>
+</html>
